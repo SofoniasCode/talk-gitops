@@ -10,27 +10,38 @@ resource "azuread_service_principal" "github_actions" {
   client_id = azuread_application.github_actions.client_id
 }
 
-resource "azuread_application_federated_identity_credential" "github_actions_dev" {
-  application_id = azuread_application.github_actions.id
-  display_name   = "${local.name_prefix}-github-dev"
-  audiences      = ["api://AzureADTokenExchange"]
-  issuer         = "https://token.actions.githubusercontent.com"
-  subject        = "repo:${var.github_repo}:ref:refs/heads/dev"
-
-  lifecycle {
-    ignore_changes = [subject]
+# The azuread provider lowercases the federated credential subject, but
+# GitHub sends case-sensitive org names. We use local-exec to preserve
+# the exact casing from var.github_repo.
+resource "terraform_data" "github_actions_federated_creds" {
+  input = {
+    app_id      = azuread_application.github_actions.client_id
+    github_repo = var.github_repo
+    prefix      = local.name_prefix
   }
-}
 
-resource "azuread_application_federated_identity_credential" "github_actions_main" {
-  application_id = azuread_application.github_actions.id
-  display_name   = "${local.name_prefix}-github-main"
-  audiences      = ["api://AzureADTokenExchange"]
-  issuer         = "https://token.actions.githubusercontent.com"
-  subject        = "repo:${var.github_repo}:ref:refs/heads/main"
+  provisioner "local-exec" {
+    command = <<-EOT
+      for BRANCH in dev main; do
+        az ad app federated-credential create \
+          --id "${self.input.app_id}" \
+          --parameters "{
+            \"name\": \"github-$BRANCH\",
+            \"issuer\": \"https://token.actions.githubusercontent.com\",
+            \"subject\": \"repo:${self.input.github_repo}:ref:refs/heads/$BRANCH\",
+            \"audiences\": [\"api://AzureADTokenExchange\"]
+          }" --output none 2>/dev/null || true
+      done
+    EOT
+  }
 
-  lifecycle {
-    ignore_changes = [subject]
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      for CRED_ID in $(az ad app federated-credential list --id "${self.input.app_id}" --query '[].id' -o tsv 2>/dev/null); do
+        az ad app federated-credential delete --id "${self.input.app_id}" --federated-credential-id "$CRED_ID" 2>/dev/null || true
+      done
+    EOT
   }
 }
 

@@ -478,10 +478,104 @@ def write_local_vault(
     print(f"wrote local Vault secret: secret/{console_api_path}")
 
 
+def write_azure_keyvault(
+    vault_name: str,
+    secret_prefix: str,
+    client_id: str,
+    client_secret: str | None,
+    project_id: str,
+    admin_token: str,
+) -> None:
+    """Write OIDC and admin secrets to Azure Key Vault via `az` CLI."""
+    secrets = {
+        f"{secret_prefix}-oauth2-proxy-client-id": client_id,
+        f"{secret_prefix}-zitadel-project-id": project_id,
+        f"{secret_prefix}-zitadel-admin-token": admin_token,
+    }
+    if client_secret:
+        secrets[f"{secret_prefix}-oauth2-proxy-client-secret"] = client_secret
+
+    for name, value in secrets.items():
+        result = run(["az", "keyvault", "secret", "set",
+                      "--vault-name", vault_name, "--name", name,
+                      "--value", value, "--output", "none"])
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to set {name}: {result.stderr.strip()}")
+        print(f"wrote Key Vault secret: {name}")
+
+
+def grant_user_roles(
+    client: ZitadelClient,
+    project_id: str,
+    user_email: str,
+    role_keys: list[str],
+    dry_run: bool,
+) -> None:
+    """Find a user by email and grant project roles."""
+    response = client.request("POST", "/v2/users", {
+        "queries": [{"emailQuery": {"emailAddress": user_email, "method": "TEXT_QUERY_METHOD_EQUALS"}}],
+    })
+    users = response.get("result", [])
+    if not users:
+        print(f"warning: user {user_email} not found, skipping role grant")
+        return
+    user_id = users[0]["userId"]
+
+    if dry_run:
+        print(f"would grant roles {role_keys} to {user_email} ({user_id})")
+        return
+
+    response = client.request("POST", f"/management/v1/users/grants/_search", {
+        "queries": [{"projectIdQuery": {"projectId": project_id}}],
+    })
+    for grant in response.get("result", []):
+        if grant.get("userId") == user_id:
+            existing_roles = set(grant.get("roleKeys", []))
+            if set(role_keys).issubset(existing_roles):
+                print(f"user {user_email} already has roles: {role_keys}")
+                return
+            combined = list(existing_roles | set(role_keys))
+            client.request("PUT", f"/management/v1/users/{user_id}/grants/{grant['id']}", {
+                "roleKeys": combined,
+            })
+            print(f"updated roles for {user_email}: {combined}")
+            return
+
+    client.request("POST", f"/management/v1/users/{user_id}/grants", {
+        "projectId": project_id,
+        "roleKeys": role_keys,
+    })
+    print(f"granted roles {role_keys} to {user_email}")
+
+
+def sync_azure_kubernetes(namespace: str) -> None:
+    """Refresh ExternalSecrets and restart deployments that consume them."""
+    commands = [
+        ["kubectl", "-n", namespace, "annotate", "externalsecret", "oauth2-proxy-oidc",
+         f"force-sync={os.getpid()}", "--overwrite"],
+        ["kubectl", "-n", namespace, "annotate", "externalsecret", "console-api-zitadel-admin",
+         f"force-sync={os.getpid()}", "--overwrite"],
+        ["kubectl", "-n", namespace, "rollout", "restart", "deploy/oauth2-proxy"],
+        ["kubectl", "-n", namespace, "rollout", "status", "deploy/oauth2-proxy", "--timeout=180s"],
+        ["kubectl", "-n", namespace, "rollout", "restart", "deploy/console-api"],
+        ["kubectl", "-n", namespace, "rollout", "status", "deploy/console-api", "--timeout=180s"],
+    ]
+    for command in commands:
+        result = run(command)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write-local-vault", action="store_true", help="write oauth2-proxy OIDC values to local Vault")
+    parser.add_argument("--write-azure-keyvault", action="store_true",
+                        help="write OIDC secrets to Azure Key Vault (requires TALK_KEY_VAULT_NAME and TALK_ENV)")
     parser.add_argument("--sync-local-k8s", action="store_true", help="sync ExternalSecret and restart local oauth2-proxy")
+    parser.add_argument("--sync-azure-k8s", action="store_true",
+                        help="refresh ExternalSecrets and restart deployments on AKS")
+    parser.add_argument("--grant-admin", metavar="EMAIL",
+                        help="grant citadel.admin + organization.owner roles to this user email")
     parser.add_argument("--dry-run", action="store_true", help="print intended changes without writing to Zitadel")
     return parser.parse_args()
 
@@ -535,11 +629,26 @@ def main() -> int:
     action_id = ensure_action(client, env("TALK_ZITADEL_ACTION_NAME", "talk_roles_claim"), action_script, args.dry_run)
     ensure_action_triggers(client, action_id, args.dry_run)
 
+    if args.grant_admin and not args.dry_run:
+        grant_user_roles(client, project_id, args.grant_admin,
+                         ["citadel.admin", "organization.owner"], args.dry_run)
+
     if args.write_local_vault and not args.dry_run:
         write_local_vault(client_id, client_secret, redirect_uris, post_logout_uris, project_id, token)
 
+    if args.write_azure_keyvault and not args.dry_run:
+        vault_name = env("TALK_KEY_VAULT_NAME", "")
+        talk_env = env("TALK_ENV", "dev")
+        if not vault_name:
+            print("ERROR: --write-azure-keyvault requires TALK_KEY_VAULT_NAME", file=sys.stderr)
+            return 1
+        write_azure_keyvault(vault_name, f"talk-{talk_env}", client_id, client_secret, project_id, token)
+
     if args.sync_local_k8s and not args.dry_run:
         sync_local_kubernetes(namespace)
+
+    if args.sync_azure_k8s and not args.dry_run:
+        sync_azure_kubernetes(namespace)
 
     print("Zitadel management provisioning complete")
     return 0
