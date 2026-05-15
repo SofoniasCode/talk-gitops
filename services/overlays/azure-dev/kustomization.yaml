@@ -7,10 +7,10 @@ resources:
 images:
   - name: ghcr.io/talk/authz
     newName: talkdevacr.azurecr.io/talk/authz
-    newTag: dev
+    newTag: b1d541b4543090a1d44307a9592da7e341011455
   - name: ghcr.io/talk/identity-sync
     newName: talkdevacr.azurecr.io/talk/identity-sync
-    newTag: dev
+    newTag: b1d541b4543090a1d44307a9592da7e341011455
   - name: ghcr.io/talk/console-api
     newName: talkdevacr.azurecr.io/talk/console-api
-    newTag: dev
+    newTag: b1d541b4543090a1d44307a9592da7e341011455

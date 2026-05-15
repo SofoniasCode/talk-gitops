@@ -6,7 +6,7 @@ resources:
 images:
   - name: ghcr.io/talk/console-web
     newName: talkdevacr.azurecr.io/talk/console-web
-    newTag: dev
+    newTag: b1d541b4543090a1d44307a9592da7e341011455
   - name: ghcr.io/talk/admin-web
     newName: talkdevacr.azurecr.io/talk/admin-web
-    newTag: dev
+    newTag: b1d541b4543090a1d44307a9592da7e341011455
