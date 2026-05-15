@@ -10,10 +10,6 @@ global:
     console: console.dev.telodev.com
     zitadel: zitadel.dev.telodev.com
     webhooks: webhooks.dev.telodev.com
-  # Kept so the legacy path-based redirects can name the old apex host until
-  # the transitional 301s are torn down.
-  domain: talk.dev.telodev.com
-  zitadelDomain: zitadel.dev.telodev.com
   adminEmail: admin@telodev.com
 
 tls:
@@ -70,12 +66,11 @@ oauth2Proxy:
       # dev console to the real internet (e.g. add the office or VPN CIDRs).
       ipAllowlist: []
 
-# Keep the old /admin /agents /console paths alive for one release as 301
-# redirects from the legacy apex host so any bookmarks land on the new
-# subdomain. Disable in the cleanup PR.
+# Path-based bookmarks (talk.dev.telodev.com/admin etc.) are no longer
+# redirected. Re-enable temporarily if a future migration needs the same
+# transitional behavior.
 legacyPathRedirects:
-  enabled: true
-  host: talk.dev.telodev.com
+  enabled: false
 
 apps:
   consoleWeb:

@@ -154,7 +154,7 @@ spec:
             - name: ZITADEL_PORT
               value: "8080"
             - name: ZITADEL_EXTERNALDOMAIN
-              value: {{ .Values.global.zitadelDomain }}
+              value: {{ include "talk.host" (list $ "zitadel") }}
             - name: ZITADEL_EXTERNALPORT
               value: {{ if .Values.tls.enabled }}"443"{{ else }}"80"{{ end }}
             - name: ZITADEL_EXTERNALSECURE
@@ -197,14 +197,15 @@ spec:
             - name: ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED
               value: "true"
             {{- $scheme := ternary "https" "http" .Values.tls.enabled }}
+            {{- $zitadelHost := include "talk.host" (list $ "zitadel") }}
             - name: ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI
-              value: {{ $scheme }}://{{ .Values.global.zitadelDomain }}/ui/v2/login/
+              value: {{ $scheme }}://{{ $zitadelHost }}/ui/v2/login/
             - name: ZITADEL_OIDC_DEFAULTLOGINURLV2
-              value: {{ $scheme }}://{{ .Values.global.zitadelDomain }}/ui/v2/login/login?authRequest=
+              value: {{ $scheme }}://{{ $zitadelHost }}/ui/v2/login/login?authRequest=
             - name: ZITADEL_OIDC_DEFAULTLOGOUTURLV2
-              value: {{ $scheme }}://{{ .Values.global.zitadelDomain }}/ui/v2/login/logout?post_logout_redirect=
+              value: {{ $scheme }}://{{ $zitadelHost }}/ui/v2/login/logout?post_logout_redirect=
             - name: ZITADEL_SAML_DEFAULTLOGINURLV2
-              value: {{ $scheme }}://{{ .Values.global.zitadelDomain }}/ui/v2/login/login?samlRequest=
+              value: {{ $scheme }}://{{ $zitadelHost }}/ui/v2/login/login?samlRequest=
           volumeMounts:
             - name: bootstrap
               mountPath: /zitadel/bootstrap
@@ -223,7 +224,7 @@ spec:
             {{- toYaml .Values.zitadel.resources.login | nindent 12 }}
           env:
             - name: CUSTOM_REQUEST_HEADERS
-              value: Host:{{ .Values.global.zitadelDomain }},X-Forwarded-Proto:{{ $scheme }}
+              value: Host:{{ $zitadelHost }},X-Forwarded-Proto:{{ $scheme }}
             - name: ZITADEL_API_URL
               value: http://localhost:8080
             - name: NEXT_PUBLIC_BASE_PATH
