@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: talk-local
+resources:
+  - ../../base
+  - external-secrets.yaml
+  - zitadel-route.yaml
+patches:
+  - target:
+      group: gateway.envoyproxy.io
+      version: v1alpha1
+      kind: EnvoyProxy
+      name: talk-envoy-proxy
+    patch: |-
+      apiVersion: gateway.envoyproxy.io/v1alpha1
+      kind: EnvoyProxy
+      metadata:
+        name: talk-envoy-proxy
+      spec:
+        provider:
+          type: Kubernetes
+          kubernetes:
+            envoyService:
+              patch:
+                type: StrategicMerge
+                value:
+                  spec:
+                    type: NodePort
+                    ports:
+                      - name: http
+                        port: 80
+                        nodePort: 30080

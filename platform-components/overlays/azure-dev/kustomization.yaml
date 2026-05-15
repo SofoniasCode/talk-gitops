@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - ../../base/external-secrets
+  - zitadel-external-secret.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: zitadel
+    patch: |-
+      - op: add
+        path: /metadata/namespace
+        value: talk-dev
+  - target:
+      kind: Service
+      name: zitadel
+    patch: |-
+      - op: add
+        path: /metadata/namespace
+        value: talk-dev

@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: talk-prod
+resources:
+  - ../../base
+  - external-secrets.yaml
+images:
+  - name: ghcr.io/talk/authz
+    newTag: prod
+  - name: ghcr.io/talk/identity-sync
+    newTag: prod
+  - name: ghcr.io/talk/console-api
+    newTag: prod

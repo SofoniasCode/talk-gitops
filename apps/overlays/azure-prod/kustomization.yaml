@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: talk-prod
+resources:
+  - ../../base
+images:
+  - name: ghcr.io/talk/console-web
+    newTag: prod
+  - name: ghcr.io/talk/admin-web
+    newTag: prod
