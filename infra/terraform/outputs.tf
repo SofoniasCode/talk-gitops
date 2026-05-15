@@ -40,7 +40,7 @@ output "dns_zone_name" {
 
 output "dns_zone_nameservers" {
   value       = azurerm_dns_zone.dev.name_servers
-  description = "Add these as NS records for 'dev' in GoDaddy DNS for telodev.com"
+  description = "Add these as NS records for the env subdomain in your domain registrar"
 }
 
 output "eso_managed_identity_client_id" {

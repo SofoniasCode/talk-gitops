@@ -24,7 +24,6 @@ variable "project" {
 variable "domain" {
   description = "Base domain (DNS zone will be created for <env>.<domain>)"
   type        = string
-  default     = "telodev.com"
 }
 
 variable "postgres_admin_username" {

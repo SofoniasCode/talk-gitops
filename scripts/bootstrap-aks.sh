@@ -18,6 +18,7 @@ set -euo pipefail
 
 TALK_AKS_CLUSTER="${TALK_AKS_CLUSTER:?Set TALK_AKS_CLUSTER}"
 TALK_RESOURCE_GROUP="${TALK_RESOURCE_GROUP:?Set TALK_RESOURCE_GROUP}"
+TALK_NAMESPACE="${TALK_NAMESPACE:-talk-${TALK_ENV:-dev}}"
 
 echo "==> Bootstrapping AKS cluster: $TALK_AKS_CLUSTER"
 
@@ -69,9 +70,9 @@ echo "    Argo CD admin password: $ARGOCD_PASSWORD"
 echo "    Access via: kubectl port-forward svc/argocd-server -n argocd 8080:443"
 echo ""
 
-# ── 5. Create talk-dev namespace ──────────────────────────────────────
-echo "==> Creating talk-dev namespace"
-kubectl create namespace talk-dev --dry-run=client -o yaml | kubectl apply -f -
+# ── 5. Create application namespace ──────────────────────────────────
+echo "==> Creating ${TALK_NAMESPACE} namespace"
+kubectl create namespace "$TALK_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
 echo ""
 echo "==> Bootstrap complete."
