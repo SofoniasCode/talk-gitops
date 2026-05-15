@@ -18,6 +18,10 @@ spec:
       volumes:
         - name: bootstrap
           emptyDir: {}
+        - name: bootstrap-pats
+          secret:
+            secretName: zitadel-bootstrap-pats
+            optional: true
       initContainers:
         - name: init-schema
           image: {{ .Values.zitadel.image.repository }}:{{ .Values.zitadel.image.tag }}
@@ -219,10 +223,10 @@ spec:
             - name: NEXT_PUBLIC_BASE_PATH
               value: /ui/v2/login
             - name: ZITADEL_SERVICE_USER_TOKEN_FILE
-              value: /zitadel/bootstrap/login-client.pat
+              value: /zitadel/pats/login-client.pat
           volumeMounts:
-            - name: bootstrap
-              mountPath: /zitadel/bootstrap
+            - name: bootstrap-pats
+              mountPath: /zitadel/pats
               readOnly: true
           readinessProbe:
             httpGet:
