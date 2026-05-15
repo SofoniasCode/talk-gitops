@@ -75,6 +75,32 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
+  name: agents-trailing-slash-redirect
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.tls.enabled }}
+  hostnames:
+    - {{ .Values.global.domain }}
+  {{- end }}
+  parentRefs:
+    - name: talk-public-gateway
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /agents
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /agents/
+            statusCode: 302
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
   name: console-web-route
   labels:
     {{- include "talk.labels" . | nindent 4 }}
@@ -112,6 +138,28 @@ spec:
         - path:
             type: PathPrefix
             value: /admin
+      backendRefs:
+        - name: oauth2-proxy
+          port: 4180
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: agents-web-route
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.tls.enabled }}
+  hostnames:
+    - {{ .Values.global.domain }}
+  {{- end }}
+  parentRefs:
+    - name: talk-public-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /agents
       backendRefs:
         - name: oauth2-proxy
           port: 4180

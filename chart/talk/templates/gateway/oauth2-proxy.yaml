@@ -18,6 +18,10 @@ data:
           path: ^/admin/?(.*)$$
           rewriteTarget: /$1
           uri: http://admin-web:80
+        - id: agents-web
+          path: ^/agents/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://agents-web:80
         - id: console-api
           path: ^/console-api/?(.*)$$
           rewriteTarget: /$1

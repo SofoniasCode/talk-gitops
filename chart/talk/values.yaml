@@ -121,6 +121,22 @@ apps:
       minReplicas: 2
       maxReplicas: 10
       targetCPU: 70
+  agentsWeb:
+    image:
+      tag: latest
+    replicas: 2
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
 
 ## ── Services (Python backends) ──────────────────────────────────────
 services:

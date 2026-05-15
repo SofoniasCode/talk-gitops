@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agents-web
+  labels:
+    app.kubernetes.io/name: agents-web
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.apps.agentsWeb.autoscaling.enabled }}
+  replicas: {{ .Values.apps.agentsWeb.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agents-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agents-web
+    spec:
+      containers:
+        - name: agents-web
+          image: {{ .Values.registry.server }}/talk/agents-web:{{ .Values.apps.agentsWeb.image.tag }}
+          imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.apps.agentsWeb.resources | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agents-web
+  labels:
+    app.kubernetes.io/name: agents-web
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: agents-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

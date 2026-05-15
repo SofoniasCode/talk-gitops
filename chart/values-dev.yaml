@@ -27,6 +27,9 @@ apps:
   adminWeb:
     image:
       tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
+  agentsWeb:
+    image:
+      tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
 
 services:
   authz:
