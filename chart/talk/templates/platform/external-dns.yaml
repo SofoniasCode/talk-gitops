@@ -1,0 +1,133 @@
+{{- if .Values.externalDns.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-dns
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+    azure.workload.identity/use: "true"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-dns
+  namespace: external-dns
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+    azure.workload.identity/use: "true"
+  annotations:
+    azure.workload.identity/client-id: {{ .Values.externalDns.azure.clientId | quote }}
+    azure.workload.identity/tenant-id: {{ .Values.externalDns.azure.tenantId | quote }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-dns
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods", "nodes"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources:
+      - gateways
+      - httproutes
+      - grpcroutes
+      - tlsroutes
+      - tcproutes
+      - udproutes
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-dns
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-dns
+subjects:
+  - kind: ServiceAccount
+    name: external-dns
+    namespace: external-dns
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-dns-azure
+  namespace: external-dns
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+data:
+  # Workload-identity-enabled Azure config consumed by external-dns via
+  # AZURE_CONFIG_FILE. Leaves aadClientId/aadClientSecret unset so the SDK
+  # uses the federated MSI credential injected by Azure Workload Identity.
+  azure.json: |
+    {
+      "tenantId": "{{ .Values.externalDns.azure.tenantId }}",
+      "subscriptionId": "{{ .Values.externalDns.azure.subscriptionId }}",
+      "resourceGroup": "{{ .Values.externalDns.azure.resourceGroup }}",
+      "useWorkloadIdentityExtension": true
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: external-dns
+  labels:
+    app.kubernetes.io/name: external-dns
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: external-dns
+        azure.workload.identity/use: "true"
+      annotations:
+        checksum/azure-config: {{ printf "%s|%s|%s|%s" .Values.externalDns.azure.tenantId .Values.externalDns.azure.subscriptionId .Values.externalDns.azure.resourceGroup .Values.externalDns.azure.clientId | sha256sum }}
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: {{ .Values.externalDns.image.repository }}:{{ .Values.externalDns.image.tag }}
+          args:
+            - --source=gateway-httproute
+            - --source=gateway-grpcroute
+            - --source=service
+            - --provider=azure
+            - --azure-config-file=/etc/kubernetes/azure.json
+            - --domain-filter={{ .Values.externalDns.domainFilter }}
+            - --txt-owner-id=talk-{{ .Values.global.environment }}
+            - --policy={{ .Values.externalDns.policy }}
+            - --registry=txt
+            - --interval={{ .Values.externalDns.interval }}
+          env:
+            - name: AZURE_CONFIG_FILE
+              value: /etc/kubernetes/azure.json
+          volumeMounts:
+            - name: azure-config
+              mountPath: /etc/kubernetes
+              readOnly: true
+          resources:
+            {{- toYaml .Values.externalDns.resources | nindent 12 }}
+      volumes:
+        - name: azure-config
+          configMap:
+            name: external-dns-azure
+{{- end }}

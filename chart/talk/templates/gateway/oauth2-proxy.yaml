@@ -1,80 +1,11 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: oauth2-proxy
-  labels:
-    app.kubernetes.io/name: oauth2-proxy
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if not .Values.oauth2Proxy.autoscaling.enabled }}
-  replicas: {{ .Values.oauth2Proxy.replicas }}
-  {{- end }}
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: oauth2-proxy
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: oauth2-proxy
-      annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/gateway/oauth2-proxy-configmap.yaml") . | sha256sum }}
-    spec:
-      containers:
-        - name: oauth2-proxy
-          image: {{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}
-          imagePullPolicy: IfNotPresent
-          resources:
-            {{- toYaml .Values.oauth2Proxy.resources | nindent 12 }}
-          args:
-            - --alpha-config=/etc/oauth2-proxy/alpha-config.yaml
-            - --proxy-prefix=/oauth2
-            - --redirect-url=$(OAUTH2_PROXY_REDIRECT_URL)
-            - --email-domain=*
-            - --skip-provider-button=true
-            - --reverse-proxy=true
-            - --cookie-name=_talk_oauth2_proxy
-            - --cookie-secure=$(OAUTH2_PROXY_COOKIE_SECURE)
-            - --cookie-secret=$(OAUTH2_PROXY_COOKIE_SECRET)
-            - --cookie-samesite=lax
-            - --cookie-domain=$(OAUTH2_PROXY_COOKIE_DOMAIN)
-            - --whitelist-domain=$(OAUTH2_PROXY_WHITELIST_DOMAIN)
-          ports:
-            - name: http
-              containerPort: 4180
-          envFrom:
-            - secretRef:
-                name: oauth2-proxy-oidc
-          volumeMounts:
-            - name: config
-              mountPath: /etc/oauth2-proxy
-              readOnly: true
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: http
-            initialDelaySeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: http
-            initialDelaySeconds: 60
-      volumes:
-        - name: config
-          configMap:
-            name: oauth2-proxy-config
+{{- $root := . }}
+{{- range $tier, $tierConfig := .Values.oauth2Proxy.tiers }}
+{{- if $tierConfig.enabled }}
+{{- include "talk.oauth2Proxy.configmap" (dict "root" $root "tier" $tier "tierConfig" $tierConfig) }}
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: oauth2-proxy
-  labels:
-    app.kubernetes.io/name: oauth2-proxy
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  type: ClusterIP
-  selector:
-    app.kubernetes.io/name: oauth2-proxy
-  ports:
-    - name: http
-      port: 4180
-      targetPort: http
+{{ include "talk.oauth2Proxy.externalSecret" (dict "root" $root "tier" $tier) }}
+---
+{{ include "talk.oauth2Proxy.deployment" (dict "root" $root "tier" $tier "tierConfig" $tierConfig) }}
+---
+{{- end }}
+{{- end }}

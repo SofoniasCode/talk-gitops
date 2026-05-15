@@ -4,10 +4,13 @@ metadata:
   name: talk-public-gateway
   labels:
     {{- include "talk.labels" . | nindent 4 }}
-  {{- if .Values.tls.enabled }}
   annotations:
+    {{- if .Values.tls.enabled }}
     cert-manager.io/cluster-issuer: {{ .Values.tls.clusterIssuer }}
-  {{- end }}
+    {{- end }}
+    {{- if and .Values.externalDns.enabled (or .Values.tls.wildcard.enabled .Values.global.baseDomain) }}
+    external-dns.alpha.kubernetes.io/hostname: {{ printf "%s,%s,%s,%s" (include "talk.host" (list $ "admin")) (include "talk.host" (list $ "agents")) (include "talk.host" (list $ "console")) (include "talk.host" (list $ "zitadel")) | quote }}
+    {{- end }}
 spec:
   gatewayClassName: {{ .Values.gateway.className }}
   infrastructure:
@@ -23,10 +26,23 @@ spec:
         namespaces:
           from: Same
     {{- if .Values.tls.enabled }}
+    {{- if .Values.tls.wildcard.enabled }}
+    - name: https-wildcard
+      protocol: HTTPS
+      port: 443
+      hostname: {{ include "talk.publicWildcardHostname" . | quote }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ .Values.tls.wildcard.secretName }}
+    {{- else }}
     - name: https-zitadel
       protocol: HTTPS
       port: 443
-      hostname: {{ .Values.global.zitadelDomain }}
+      hostname: {{ include "talk.host" (list $ "zitadel") }}
       allowedRoutes:
         namespaces:
           from: Same
@@ -45,4 +61,5 @@ spec:
         mode: Terminate
         certificateRefs:
           - name: talk-{{ .Values.global.environment }}-tls
+    {{- end }}
     {{- end }}

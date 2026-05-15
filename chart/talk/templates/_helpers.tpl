@@ -41,3 +41,39 @@ Usage: {{ include "talk.kvKey" (list $ "zitadel" "masterkey") }}
 {{- $key := index . 2 -}}
 talk-{{ $root.Values.global.environment }}-{{ $component }}-{{ $key }}
 {{- end }}
+
+{{/*
+Hostname helpers. Prefer the new global.domains map; fall back to the legacy
+global.domain / global.zitadelDomain values during the migration so the chart
+keeps rendering against pre-subdomain values files.
+
+Usage: {{ include "talk.host" (list $ "admin") }}
+*/}}
+{{- define "talk.host" -}}
+{{- $root := index . 0 -}}
+{{- $key := index . 1 -}}
+{{- $domains := dig "domains" (dict) $root.Values.global -}}
+{{- $explicit := index $domains $key -}}
+{{- if $explicit -}}
+{{- $explicit -}}
+{{- else if $root.Values.global.baseDomain -}}
+{{- printf "%s.%s" $key $root.Values.global.baseDomain -}}
+{{- else if eq $key "zitadel" -}}
+{{- $root.Values.global.zitadelDomain -}}
+{{- else -}}
+{{- $root.Values.global.domain -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Wildcard SNI for the public Gateway listener. Uses the configured base domain
+when present (so a single cert covers every product subdomain) and otherwise
+falls back to the legacy single-host name.
+*/}}
+{{- define "talk.publicWildcardHostname" -}}
+{{- if .Values.global.baseDomain -}}
+*.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Values.global.domain }}
+{{- end -}}
+{{- end }}

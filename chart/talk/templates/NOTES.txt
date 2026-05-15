@@ -1,15 +1,23 @@
 Talk has been deployed to namespace {{ .Release.Namespace }}.
 
-  Environment:  {{ .Values.global.environment }}
-  App domain:   {{ .Values.global.domain }}
-  Zitadel:      {{ .Values.global.zitadelDomain }}
-  TLS:          {{ .Values.tls.enabled }}
-  Registry:     {{ .Values.registry.server }}
+  Environment:   {{ .Values.global.environment }}
+  Base domain:   {{ default .Values.global.domain .Values.global.baseDomain }}
+  TLS:           {{ .Values.tls.enabled }}{{ if .Values.tls.wildcard.enabled }} (wildcard {{ .Values.tls.wildcard.secretName }}){{ end }}
+  external-dns:  {{ .Values.externalDns.enabled }}
+  Registry:      {{ .Values.registry.server }}
+
+Per-product subdomains:
+  Admin:    {{ if .Values.tls.enabled }}https{{ else }}http{{ end }}://{{ include "talk.host" (list $ "admin") }}/
+  Agents:   {{ if .Values.tls.enabled }}https{{ else }}http{{ end }}://{{ include "talk.host" (list $ "agents") }}/
+  Console:  {{ if .Values.tls.enabled }}https{{ else }}http{{ end }}://{{ include "talk.host" (list $ "console") }}/  (staff only)
+  Zitadel:  {{ if .Values.tls.enabled }}https{{ else }}http{{ end }}://{{ include "talk.host" (list $ "zitadel") }}/
 
 To check pod status:
 
   kubectl get pods -n {{ .Release.Namespace }}
+  kubectl get certificate -n {{ .Release.Namespace }}
+{{ if .Values.externalDns.enabled }}
+To check DNS sync:
 
-To access the console:
-
-  {{ if .Values.tls.enabled }}https{{ else }}http{{ end }}://{{ .Values.global.domain }}/console/
+  kubectl logs -n external-dns deploy/external-dns --tail=50
+{{ end }}

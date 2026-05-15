@@ -3,6 +3,15 @@
 
 global:
   environment: dev
+  baseDomain: dev.telodev.com
+  domains:
+    admin: admin.dev.telodev.com
+    agents: agents.dev.telodev.com
+    console: console.dev.telodev.com
+    zitadel: zitadel.dev.telodev.com
+    webhooks: webhooks.dev.telodev.com
+  # Kept so the legacy path-based redirects can name the old apex host until
+  # the transitional 301s are torn down.
   domain: talk.dev.telodev.com
   zitadelDomain: zitadel.dev.telodev.com
   adminEmail: admin@telodev.com
@@ -10,6 +19,30 @@ global:
 tls:
   enabled: true
   clusterIssuer: letsencrypt-prod
+  wildcard:
+    enabled: true
+    clusterIssuer: letsencrypt-prod-dns01
+    secretName: talk-dev-wildcard-tls
+
+certManager:
+  dns01:
+    enabled: true
+    clusterIssuerName: letsencrypt-prod-dns01
+    azure:
+      subscriptionId: 5440e535-65a4-42c9-a742-f3817bd29fde
+      resourceGroup: talk-dev-rg
+      tenantId: 9865568e-ab2b-4e9e-844e-b8047f9babda
+      clientId: f9ef3263-8acf-4e76-ae82-bcc377421778
+      hostedZoneName: dev.telodev.com
+
+externalDns:
+  enabled: true
+  domainFilter: dev.telodev.com
+  azure:
+    subscriptionId: 5440e535-65a4-42c9-a742-f3817bd29fde
+    resourceGroup: talk-dev-rg
+    tenantId: 9865568e-ab2b-4e9e-844e-b8047f9babda
+    clientId: 6ab77f16-8629-4712-ae9c-2e67f812c664
 
 registry:
   server: talkdevacr.azurecr.io
@@ -19,6 +52,23 @@ externalSecrets:
   workloadIdentity:
     clientId: 15656477-0f53-44b8-9cd2-955bb4ef69ef
     tenantId: 9865568e-ab2b-4e9e-844e-b8047f9babda
+
+oauth2Proxy:
+  tiers:
+    public:
+      enabled: true
+    console:
+      enabled: true
+      # Empty allowlist = no SecurityPolicy. Tighten before ever exposing the
+      # dev console to the real internet (e.g. add the office or VPN CIDRs).
+      ipAllowlist: []
+
+# Keep the old /admin /agents /console paths alive for one release as 301
+# redirects from the legacy apex host so any bookmarks land on the new
+# subdomain. Disable in the cleanup PR.
+legacyPathRedirects:
+  enabled: true
+  host: talk.dev.telodev.com
 
 apps:
   consoleWeb:
@@ -38,6 +88,9 @@ services:
   consoleApi:
     image:
       tag: 15432ca5f0a1563a9c4a99f7d572cc3887174526
+    # Each frontend reaches console-api via /console-api/* on its own
+    # subdomain (same origin, routed through the per-subdomain
+    # oauth2-proxy), so no CORS configuration is needed.
   identitySync:
     image:
       tag: 15432ca5f0a1563a9c4a99f7d572cc3887174526

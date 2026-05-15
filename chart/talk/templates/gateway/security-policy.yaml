@@ -1,0 +1,30 @@
+{{- if and .Values.oauth2Proxy.tiers.console.enabled .Values.oauth2Proxy.tiers.console.ipAllowlist }}
+{{- /*
+Restrict the staff Console to a CIDR allowlist. The policy is attached to the
+console HTTPRoute so admin/agents and the rest of the public tier are
+unaffected. When ipAllowlist is empty the policy is not rendered, so dev
+clusters with no public exposure stay accessible.
+*/ -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: talk-console-ip-allowlist
+  labels:
+    app.kubernetes.io/component: console
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: console-web-route
+  authorization:
+    defaultAction: Deny
+    rules:
+      - name: allow-staff-cidrs
+        action: Allow
+        principal:
+          clientCIDRs:
+{{- range .Values.oauth2Proxy.tiers.console.ipAllowlist }}
+            - {{ . | quote }}
+{{- end }}
+{{- end }}

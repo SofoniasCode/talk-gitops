@@ -1,0 +1,23 @@
+{{- if and .Values.tls.enabled .Values.tls.wildcard.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.tls.wildcard.secretName }}
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  secretName: {{ .Values.tls.wildcard.secretName }}
+  issuerRef:
+    name: {{ .Values.tls.wildcard.clusterIssuer }}
+    kind: ClusterIssuer
+  duration: 2160h     # 90 days
+  renewBefore: 720h   # 30 days
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  commonName: {{ .Values.global.baseDomain }}
+  dnsNames:
+    - {{ .Values.global.baseDomain }}
+    - "*.{{ .Values.global.baseDomain }}"
+{{- end }}

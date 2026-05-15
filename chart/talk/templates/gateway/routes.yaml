@@ -1,14 +1,23 @@
+{{- /*
+Per-subdomain routing. Each product owns one subdomain that funnels through
+its tier's oauth2-proxy. The proxy handles the OIDC dance under /oauth2/* and
+forwards everything else to the product's internal Service after the Gateway
+rewrites the path prefix to match the proxy's upstream config.
+
+Order matters in HTTPRoute rules: more specific path matches must come first
+so /oauth2 and /console-api are not accidentally captured by the catch-all.
+*/ -}}
+
+{{- /* ---------- admin.<base> (public tier) ---------- */ -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: oauth2-proxy-route
+  name: admin-web-route
   labels:
     {{- include "talk.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.tls.enabled }}
   hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
+    - {{ include "talk.host" (list $ "admin") }}
   parentRefs:
     - name: talk-public-gateway
   rules:
@@ -17,131 +26,30 @@ spec:
             type: PathPrefix
             value: /oauth2
       backendRefs:
-        - name: oauth2-proxy
+        - name: oauth2-proxy-public
           port: 4180
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: console-trailing-slash-redirect
-  labels:
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if .Values.tls.enabled }}
-  hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
-  parentRefs:
-    - name: talk-public-gateway
-  rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /console
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            path:
-              type: ReplaceFullPath
-              replaceFullPath: /console/
-            statusCode: 302
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: admin-trailing-slash-redirect
-  labels:
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if .Values.tls.enabled }}
-  hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
-  parentRefs:
-    - name: talk-public-gateway
-  rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /admin
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            path:
-              type: ReplaceFullPath
-              replaceFullPath: /admin/
-            statusCode: 302
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: agents-trailing-slash-redirect
-  labels:
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if .Values.tls.enabled }}
-  hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
-  parentRefs:
-    - name: talk-public-gateway
-  rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /agents
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            path:
-              type: ReplaceFullPath
-              replaceFullPath: /agents/
-            statusCode: 302
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: console-web-route
-  labels:
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if .Values.tls.enabled }}
-  hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
-  parentRefs:
-    - name: talk-public-gateway
-  rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /console
+            value: /console-api
       backendRefs:
-        - name: oauth2-proxy
+        - name: oauth2-proxy-public
           port: 4180
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: admin-web-route
-  labels:
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if .Values.tls.enabled }}
-  hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
-  parentRefs:
-    - name: talk-public-gateway
-  rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /admin
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /admin
       backendRefs:
-        - name: oauth2-proxy
+        - name: oauth2-proxy-public
           port: 4180
 ---
+{{- /* ---------- agents.<base> (public tier) ---------- */ -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -149,43 +57,81 @@ metadata:
   labels:
     {{- include "talk.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.tls.enabled }}
   hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
+    - {{ include "talk.host" (list $ "agents") }}
   parentRefs:
     - name: talk-public-gateway
   rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /agents
+            value: /oauth2
       backendRefs:
-        - name: oauth2-proxy
+        - name: oauth2-proxy-public
           port: 4180
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: console-api-route
-  labels:
-    {{- include "talk.labels" . | nindent 4 }}
-spec:
-  {{- if .Values.tls.enabled }}
-  hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
-  parentRefs:
-    - name: talk-public-gateway
-  rules:
     - matches:
         - path:
             type: PathPrefix
             value: /console-api
       backendRefs:
-        - name: oauth2-proxy
+        - name: oauth2-proxy-public
+          port: 4180
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /agents
+      backendRefs:
+        - name: oauth2-proxy-public
           port: 4180
 ---
+{{- /* ---------- console.<base> (staff tier) ---------- */ -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: console-web-route
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  hostnames:
+    - {{ include "talk.host" (list $ "console") }}
+  parentRefs:
+    - name: talk-public-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /oauth2
+      backendRefs:
+        - name: oauth2-proxy-console
+          port: 4180
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /console-api
+      backendRefs:
+        - name: oauth2-proxy-console
+          port: 4180
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /console
+      backendRefs:
+        - name: oauth2-proxy-console
+          port: 4180
+---
+{{- /* ---------- webhooks.<base> (unauthenticated, signature-verified) ---------- */ -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -193,10 +139,8 @@ metadata:
   labels:
     {{- include "talk.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.tls.enabled }}
   hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
+    - {{ include "talk.host" (list $ "webhooks") }}
   parentRefs:
     - name: talk-public-gateway
   rules:
@@ -213,18 +157,97 @@ spec:
       backendRefs:
         - name: identity-sync
           port: 8000
+{{- if .Values.legacyPathRedirects.enabled }}
+---
+{{- /* ---------- transitional: redirect old paths on the legacy host ---------- */ -}}
+{{- $legacyHost := .Values.legacyPathRedirects.host -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: legacy-admin-redirect
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  hostnames:
+    - {{ $legacyHost }}
+  parentRefs:
+    - name: talk-public-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /admin
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            hostname: {{ include "talk.host" (list $ "admin") }}
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+            statusCode: 301
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: root-console-redirect
+  name: legacy-agents-redirect
   labels:
     {{- include "talk.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.tls.enabled }}
   hostnames:
-    - {{ .Values.global.domain }}
-  {{- end }}
+    - {{ $legacyHost }}
+  parentRefs:
+    - name: talk-public-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /agents
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            hostname: {{ include "talk.host" (list $ "agents") }}
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: legacy-console-redirect
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  hostnames:
+    - {{ $legacyHost }}
+  parentRefs:
+    - name: talk-public-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /console
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            hostname: {{ include "talk.host" (list $ "console") }}
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: legacy-root-redirect
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  hostnames:
+    - {{ $legacyHost }}
   parentRefs:
     - name: talk-public-gateway
   rules:
@@ -235,7 +258,7 @@ spec:
       filters:
         - type: RequestRedirect
           requestRedirect:
-            path:
-              type: ReplaceFullPath
-              replaceFullPath: /console/
+            scheme: https
+            hostname: {{ include "talk.host" (list $ "admin") }}
             statusCode: 302
+{{- end }}

@@ -1,8 +1,14 @@
 ## ── Global ──────────────────────────────────────────────────────────
 global:
   environment: dev            # dev | stg | prod — used as Key Vault prefix
-  domain: talk.example.com    # main app hostname
-  zitadelDomain: zitadel.example.com
+  baseDomain: example.com     # the env's DNS zone, e.g. dev.telodev.com
+  # Per-product subdomains. When unset they default to <key>.<baseDomain> via
+  # the talk.host helper. Override if a product needs a different name.
+  domains: {}
+  # Legacy single-host fields. Kept so older values files still render until
+  # they are migrated to baseDomain + domains.
+  domain: ""
+  zitadelDomain: ""
   adminEmail: admin@example.com
 
 nameOverride: ""
@@ -12,6 +18,50 @@ fullnameOverride: ""
 tls:
   enabled: true
   clusterIssuer: letsencrypt-prod
+  # When enabled, the Gateway terminates a single wildcard cert for the env
+  # and the per-host listeners + per-host certs are removed. Requires
+  # certManager.dns01 to be configured.
+  wildcard:
+    enabled: false
+    clusterIssuer: letsencrypt-prod-dns01
+    secretName: talk-wildcard-tls
+
+## ── cert-manager DNS-01 ─────────────────────────────────────────────
+certManager:
+  dns01:
+    # When true, the chart owns the ClusterIssuer; otherwise it assumes one
+    # already exists out-of-band (useful when Terraform installs the issuer).
+    enabled: true
+    clusterIssuerName: letsencrypt-prod-dns01
+    acmeServer: https://acme-v02.api.letsencrypt.org/directory
+    azure:
+      subscriptionId: ""
+      resourceGroup: ""
+      tenantId: ""
+      clientId: ""
+      hostedZoneName: ""
+
+## ── external-dns ────────────────────────────────────────────────────
+externalDns:
+  enabled: false
+  image:
+    repository: registry.k8s.io/external-dns/external-dns
+    tag: v0.18.0
+  domainFilter: ""
+  policy: sync                # sync | upsert-only
+  interval: 1m
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  azure:
+    subscriptionId: ""
+    resourceGroup: ""
+    tenantId: ""
+    clientId: ""
 
 ## ── Container Registry ─────────────────────────────────────────────
 registry:
@@ -65,6 +115,11 @@ zitadel:
     patExpirationDate: "2027-01-01T00:00:00Z"
 
 ## ── OAuth2 Proxy ────────────────────────────────────────────────────
+# Two-tier deployment. The "public" tier covers customer-facing products
+# (admin, agents, future transcribe) and shares one OIDC client + cookie
+# scoped to the env's base domain so the customer signs in once. The
+# "console" tier protects the staff Console with its own OIDC client, its
+# own cookie, and an optional IP allowlist enforced at the Gateway.
 oauth2Proxy:
   image:
     repository: quay.io/oauth2-proxy/oauth2-proxy
@@ -82,10 +137,48 @@ oauth2Proxy:
     minReplicas: 2
     maxReplicas: 10
     targetCPU: 70
+  tiers:
+    public:
+      enabled: true
+      cookieName: _talk_public
+      upstreams:
+        - id: admin-web
+          path: ^/admin/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://admin-web:80
+        - id: agents-web
+          path: ^/agents/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://agents-web:80
+        - id: console-api
+          path: ^/console-api/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://console-api:8000
+    console:
+      enabled: true
+      cookieName: _talk_console
+      ipAllowlist: []        # empty = no SecurityPolicy is created
+      upstreams:
+        - id: console-web
+          path: ^/console/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://console-web:80
+        - id: console-api
+          path: ^/console-api/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://console-api:8000
 
 ## ── Gateway ─────────────────────────────────────────────────────────
 gateway:
   className: talk-envoy
+
+## ── Legacy path-based routing (transitional) ────────────────────────
+# When enabled the chart serves 301 redirects from /admin /agents /console
+# on the legacy host to the new subdomains, so any bookmarks survive the
+# cutover. Disable in a follow-up release.
+legacyPathRedirects:
+  enabled: false
+  host: ""
 
 ## ── Applications (web frontends) ────────────────────────────────────
 apps:
@@ -176,6 +269,9 @@ services:
       appEnv: production
       authzBaseUrl: http://authz:8000
       dependencyTimeoutSeconds: "5"
+      # CORS allowed origins for browser calls from the per-product
+      # subdomains. Computed defaults from global.domains in values-<env>.
+      corsAllowedOrigins: []
   identitySync:
     image:
       tag: latest

@@ -1,0 +1,23 @@
+{{- if and .Values.tls.enabled .Values.tls.wildcard.enabled .Values.certManager.dns01.enabled }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.certManager.dns01.clusterIssuerName }}
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  acme:
+    email: {{ .Values.global.adminEmail }}
+    server: {{ .Values.certManager.dns01.acmeServer }}
+    privateKeySecretRef:
+      name: {{ .Values.certManager.dns01.clusterIssuerName }}-account-key
+    solvers:
+      - dns01:
+          azureDNS:
+            environment: AzurePublicCloud
+            subscriptionID: {{ .Values.certManager.dns01.azure.subscriptionId }}
+            resourceGroupName: {{ .Values.certManager.dns01.azure.resourceGroup }}
+            hostedZoneName: {{ .Values.certManager.dns01.azure.hostedZoneName }}
+            managedIdentity:
+              clientID: {{ .Values.certManager.dns01.azure.clientId }}
+{{- end }}
