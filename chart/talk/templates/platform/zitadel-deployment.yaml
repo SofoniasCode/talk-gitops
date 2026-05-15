@@ -212,14 +212,14 @@ spec:
             - name: login
               containerPort: 3000
           env:
+            - name: CUSTOM_REQUEST_HEADERS
+              value: Host:{{ .Values.global.zitadelDomain }},X-Forwarded-Proto:{{ $scheme }}
             - name: ZITADEL_API_URL
               value: http://localhost:8080
             - name: NEXT_PUBLIC_BASE_PATH
               value: /ui/v2/login
             - name: ZITADEL_SERVICE_USER_TOKEN_FILE
               value: /zitadel/bootstrap/login-client.pat
-            - name: CUSTOM_REQUEST_HEADERS
-              value: Host:{{ .Values.global.zitadelDomain }},X-Forwarded-Proto:{{ $scheme }}
           volumeMounts:
             - name: bootstrap
               mountPath: /zitadel/bootstrap
