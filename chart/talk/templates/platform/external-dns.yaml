@@ -27,7 +27,7 @@ metadata:
     {{- include "talk.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
-    resources: ["services", "endpoints", "pods", "nodes"]
+    resources: ["services", "endpoints", "pods", "nodes", "namespaces"]
     verbs: ["get", "watch", "list"]
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
