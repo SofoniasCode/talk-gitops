@@ -5,8 +5,8 @@ resources:
   - ../../base
 images:
   - name: ghcr.io/talk/console-web
-    newName: talkdevacr.azurecr.io/talk/console-web
+onsole-web$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
     newTag: dev
   - name: ghcr.io/talk/admin-web
-    newName: talkdevacr.azurecr.io/talk/admin-web
+onsole-web$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
     newTag: dev
