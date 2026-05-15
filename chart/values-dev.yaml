@@ -54,6 +54,13 @@ externalSecrets:
     tenantId: 9865568e-ab2b-4e9e-844e-b8047f9babda
 
 oauth2Proxy:
+  # Envoy Gateway data plane Service ClusterIP. Lets the proxies reach Zitadel
+  # without hitting the cluster's own external LoadBalancer IP, which AKS
+  # blocks for hairpin traffic.
+  hostAliases:
+    - ip: 10.2.239.86
+      hostnames:
+        - zitadel.dev.telodev.com
   tiers:
     public:
       enabled: true
