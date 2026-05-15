@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zitadel
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-schema
+          env:
+            - name: ZITADEL_DATABASE_POSTGRES_SSL_MODE
+              value: require
+      containers:
+        - name: api
+          env:
+            - name: ZITADEL_DATABASE_POSTGRES_SSL_MODE
+              value: require
+            - name: ZITADEL_EXTERNALDOMAIN
+              value: REPLACE_WITH_ZITADEL_DOMAIN
+            - name: ZITADEL_EXTERNALPORT
+              value: "443"
+            - name: ZITADEL_EXTERNALSECURE
+              value: "true"
+            - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS
+              value: REPLACE_WITH_ADMIN_EMAIL
+            - name: ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI
+              value: REPLACE_WITH_HTTPS_ZITADEL_DOMAIN/ui/v2/login/
+            - name: ZITADEL_OIDC_DEFAULTLOGINURLV2
+              value: REPLACE_WITH_HTTPS_ZITADEL_DOMAIN/ui/v2/login/login?authRequest=
+            - name: ZITADEL_OIDC_DEFAULTLOGOUTURLV2
+              value: REPLACE_WITH_HTTPS_ZITADEL_DOMAIN/ui/v2/login/logout?post_logout_redirect=
+            - name: ZITADEL_SAML_DEFAULTLOGINURLV2
+              value: REPLACE_WITH_HTTPS_ZITADEL_DOMAIN/ui/v2/login/login?samlRequest=
+        - name: login
+          env:
+            - name: CUSTOM_REQUEST_HEADERS
+              value: REPLACE_WITH_Host_colon_ZITADEL_DOMAIN_comma_X-Forwarded-Proto_colon_https

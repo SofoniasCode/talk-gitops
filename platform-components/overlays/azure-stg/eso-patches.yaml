@@ -1,0 +1,17 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: talk-azure-key-vault
+spec:
+  provider:
+    azurekv:
+      vaultUrl: https://talk-stg-kv.vault.azure.net
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: talk-external-secrets-workload-identity
+  namespace: external-secrets
+  annotations:
+    azure.workload.identity/client-id: REPLACE_WITH_TERRAFORM_OUTPUT_eso_managed_identity_client_id
+    azure.workload.identity/tenant-id: REPLACE_WITH_TERRAFORM_OUTPUT_eso_managed_identity_tenant_id

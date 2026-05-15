@@ -46,7 +46,9 @@ spec:
                 secretKeyRef:
                   name: zitadel-config
                   key: database-name
-            - name: ZITADEL_DATABASE_POSTGRES_SSL_MODE
+            - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+              value: disable
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
               value: disable
             - name: ZITADEL_DATABASE_POSTGRES_ADMIN_EXISTINGDATABASE
               valueFrom:
@@ -58,11 +60,21 @@ spec:
                 secretKeyRef:
                   name: zitadel-config
                   key: database-user
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zitadel-config
+                  key: database-password
             - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: zitadel-config
                   key: database-user
+            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zitadel-config
+                  key: database-password
       containers:
         - name: api
           image: ghcr.io/zitadel/zitadel:v4.11.0
@@ -101,7 +113,9 @@ spec:
                 secretKeyRef:
                   name: zitadel-config
                   key: database-name
-            - name: ZITADEL_DATABASE_POSTGRES_SSL_MODE
+            - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+              value: disable
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
               value: disable
             - name: ZITADEL_DATABASE_POSTGRES_ADMIN_EXISTINGDATABASE
               valueFrom:
@@ -113,11 +127,21 @@ spec:
                 secretKeyRef:
                   name: zitadel-config
                   key: database-user
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zitadel-config
+                  key: database-password
             - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: zitadel-config
                   key: database-user
+            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zitadel-config
+                  key: database-password
             - name: ZITADEL_PORT
               value: "8080"
             - name: ZITADEL_EXTERNALDOMAIN

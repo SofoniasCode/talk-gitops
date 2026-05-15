@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: talk-services-dev
+  name: talk-apps-prod
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/sofoniascode/talk-gitops.git
+    repoURL: REPLACE_WITH_GITOPS_REPO_URL
     targetRevision: main
-    path: services/overlays/azure-dev
+    path: apps/overlays/azure-prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: talk-dev
+    namespace: talk-prod
   syncPolicy:
     automated:
-      prune: true
+      prune: false
       selfHeal: true
     syncOptions:
       - CreateNamespace=true

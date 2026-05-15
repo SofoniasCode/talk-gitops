@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: talk-services-dev
+  name: talk-gateway-dev
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/sofoniascode/talk-gitops.git
     targetRevision: main
-    path: services/overlays/azure-dev
+    path: gateway/overlays/azure-dev
   destination:
     server: https://kubernetes.default.svc
     namespace: talk-dev

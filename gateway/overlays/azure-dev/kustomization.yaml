@@ -4,3 +4,14 @@ namespace: talk-dev
 resources:
   - ../../base
   - external-secrets.yaml
+  - zitadel-route.yaml
+patches:
+  - path: gateway-patch.yaml
+  - target:
+      kind: HTTPRoute
+      name: oauth2-proxy-route|console-trailing-slash-redirect|admin-trailing-slash-redirect|console-web-route|admin-web-route|console-api-route|identity-sync-webhook-route|root-console-redirect
+    patch: |
+      - op: add
+        path: /spec/hostnames
+        value:
+          - talk.dev.telodev.com
