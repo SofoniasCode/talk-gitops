@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy-config
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+data:
+  alpha-config.yaml: |
+    server:
+      bindAddress: 0.0.0.0:4180
+    upstreamConfig:
+      upstreams:
+        - id: console-web
+          path: ^/console/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://console-web:80
+        - id: admin-web
+          path: ^/admin/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://admin-web:80
+        - id: agents-web
+          path: ^/agents/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://agents-web:80
+        - id: console-api
+          path: ^/console-api/?(.*)$$
+          rewriteTarget: /$1
+          uri: http://console-api:8000
+    providers:
+      - id: zitadel
+        provider: oidc
+        clientID: "${OAUTH2_PROXY_CLIENT_ID}"
+        clientSecret: "${OAUTH2_PROXY_CLIENT_SECRET}"
+        scope: "openid email profile urn:zitadel:iam:user:resourceowner"
+        oidcConfig:
+          issuerURL: "${OAUTH2_PROXY_OIDC_ISSUER_URL}"
+          insecureSkipIssuerVerification: ${OAUTH2_PROXY_INSECURE_SKIP_ISSUER_VERIFICATION}
+          userIDClaim: sub
+          groupsClaim: urn:talk:roles
+        profileURL: "${OAUTH2_PROXY_OIDC_ISSUER_URL}/oidc/v1/userinfo"
+        additionalClaims:
+          - urn:talk:organization_id
+          - urn:talk:roles
+    injectRequestHeaders:
+      - name: X-Talk-Subject-Id
+        values:
+          - claimSource:
+              claim: user
+      - name: X-Talk-Organization-Id
+        values:
+          - claimSource:
+              claim: urn:talk:organization_id
+      - name: X-Talk-Roles
+        values:
+          - claimSource:
+              claim: groups
+      - name: Authorization
+        values:
+          - claimSource:
+              claim: access_token
+              prefix: "Bearer "
