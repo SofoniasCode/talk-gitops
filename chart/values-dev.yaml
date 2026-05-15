@@ -17,7 +17,7 @@ registry:
 externalSecrets:
   keyVaultUrl: https://talk-dev-vault.vault.azure.net/
   workloadIdentity:
-    clientId: fc4ddb92-cdf0-4aa6-a636-1f9b635ebb48
+    clientId: 15656477-0f53-44b8-9cd2-955bb4ef69ef
     tenantId: 9865568e-ab2b-4e9e-844e-b8047f9babda
 
 apps:
