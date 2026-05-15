@@ -1,0 +1,40 @@
+## Values for azure-dev environment
+## Usage: helm install talk ./chart/talk -n talk-dev -f chart/values-dev.yaml
+
+global:
+  environment: dev
+  domain: talk.dev.telodev.com
+  zitadelDomain: zitadel.dev.telodev.com
+  adminEmail: admin@telodev.com
+
+tls:
+  enabled: true
+  clusterIssuer: letsencrypt-prod
+
+registry:
+  server: talkdevacr.azurecr.io
+
+externalSecrets:
+  keyVaultUrl: https://talk-dev-vault.vault.azure.net/
+  workloadIdentity:
+    clientId: fc4ddb92-cdf0-4aa6-a636-1f9b635ebb48
+    tenantId: 9865568e-ab2b-4e9e-844e-b8047f9babda
+
+apps:
+  consoleWeb:
+    image:
+      tag: b1d541b4543090a1d44307a9592da7e341011455
+  adminWeb:
+    image:
+      tag: b1d541b4543090a1d44307a9592da7e341011455
+
+services:
+  authz:
+    image:
+      tag: b1d541b4543090a1d44307a9592da7e341011455
+  consoleApi:
+    image:
+      tag: b1d541b4543090a1d44307a9592da7e341011455
+  identitySync:
+    image:
+      tag: b1d541b4543090a1d44307a9592da7e341011455

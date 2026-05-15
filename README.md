@@ -1,76 +1,71 @@
-# talk-platform-gitops
+# talk-gitops
 
-GitOps manifests for JeenTalk platform infrastructure, backend services, and frontend apps.
+GitOps deployment manifests for the Talk platform. This repository is watched by
+Argo CD for continuous deployment.
 
-For local-only preparation before an Azure subscription exists, see `AZURE_PREP.md`.
+## Repository Layout
 
-This repository follows the product architecture notes:
+```
+chart/
+├── talk/                  # Helm chart (templates, _helpers.tpl, defaults)
+├── values-dev.yaml        # Azure dev values (image tags updated by CI)
+├── values-stg.yaml        # Azure staging values
+└── values-prod.yaml       # Azure production values
+argocd-applications/       # Argo CD Application manifests per environment
+scripts/
+└── bootstrap-local-dev.sh # Local dev deploy (Kind + Vault + local Postgres)
+```
 
-- `platform-components/`: cluster components such as External Secrets, Vault, Zitadel, Redis, observability, and cert-manager.
-- `services/base/`: reusable Kustomize bases for backend services.
-- `services/overlays/`: environment-specific patches for local, dev, staging, and production.
-- `apps/base/`: reusable Kustomize bases for frontend apps.
-- `apps/overlays/`: environment-specific app patches.
-- `gateway/base/`: Envoy Gateway API resources, oauth2-proxy, and public HTTP routes.
-- `gateway/overlays/`: environment-specific gateway namespaces and patches.
-- `zitadel/`: Zitadel setup runbooks, token actions, and non-secret examples.
-- `argocd-applications/`: ArgoCD app-of-apps entries per environment.
+## Related Repositories
 
-Service-owned migrations run from the same image as the service, either as a release `Job` or an init-container gate where that is acceptable for the environment.
+| Repo | Purpose |
+|------|---------|
+| `talk` | Application code (Python services + web apps), CI workflows |
+| `talk-gitops` | Helm chart, Argo CD applications, per-environment values (this repo) |
+| `talk-infra` | Terraform, bootstrap scripts, secret provisioning |
 
-Environment overlays use External Secrets Operator (`external-secrets.io/v1`) to sync runtime
-secrets. Azure overlays use Azure Key Vault through `talk-azure-key-vault`; local overlays use
-HashiCorp Vault through `talk-hashicorp-vault`.
+## How Deployment Works
 
-Required Azure Key Vault secret names:
+1. A push to `talk` triggers CI which builds images, pushes to ACR, and updates
+   the image tag in `chart/values-<env>.yaml` via a commit to this repo
+2. Argo CD detects the values change and syncs the Helm chart to the cluster
+
+## Usage
+
+**Direct Helm install:**
+
+```sh
+helm install talk chart/talk -n talk-dev --create-namespace -f chart/values-dev.yaml
+```
+
+**Argo CD (recommended for production):**
+
+```sh
+kubectl apply -f argocd-applications/dev/talk.yaml
+```
+
+**Upgrade after values change:**
+
+```sh
+helm upgrade talk chart/talk -n talk-dev -f chart/values-dev.yaml
+```
+
+## Required Azure Key Vault Secrets
+
+The Helm chart uses External Secrets Operator to pull secrets from Azure Key Vault.
+All keys follow the pattern `talk-<env>-<component>-<key>`:
 
 - `talk-<env>-authz-database-url`
 - `talk-<env>-zitadel-masterkey`
-- `talk-<env>-zitadel-database-dsn`
-- `talk-<env>-zitadel-database-host`
-- `talk-<env>-zitadel-database-port`
-- `talk-<env>-zitadel-database-name`
-- `talk-<env>-zitadel-database-user`
-- `talk-<env>-zitadel-admin-password`
+- `talk-<env>-zitadel-database-{dsn,host,port,name,user,password}`
+- `talk-<env>-zitadel-{issuer-url,admin-token,admin-password,api-host-header,project-id}`
 - `talk-<env>-identity-sync-zitadel-webhook-signing-key`
-- `talk-<env>-zitadel-issuer-url`
-- `talk-<env>-zitadel-admin-token`
-- `talk-<env>-zitadel-api-host-header`
-- `talk-<env>-zitadel-project-id`
-- `talk-<env>-oauth2-proxy-client-id`
-- `talk-<env>-oauth2-proxy-client-secret`
-- `talk-<env>-oauth2-proxy-cookie-secret`
-- `talk-<env>-oauth2-proxy-redirect-url`
-- `talk-<env>-oauth2-proxy-cookie-domain`
-- `talk-<env>-oauth2-proxy-whitelist-domain`
-- `talk-<env>-oauth2-proxy-cookie-secure`
-- `talk-<env>-oauth2-proxy-insecure-skip-issuer-verification`
+- `talk-<env>-oauth2-proxy-{client-id,client-secret,cookie-secret,redirect-url,cookie-domain,whitelist-domain,cookie-secure,insecure-skip-issuer-verification}`
 
-Use `dev`, `stg`, or `prod` for `<env>`.
+See `talk-infra` for scripts that populate these secrets.
 
-Required local HashiCorp Vault KV v2 paths:
+## Legacy Kustomize (to be removed)
 
-- `secret/talk/local/authz/database` with property `database-url`
-- `secret/talk/local/zitadel/config` with properties `masterkey`, `database-dsn`, `database-host`, `database-port`, `database-name`, `database-user`, and `admin-password`
-- `secret/talk/local/identity-sync/zitadel-webhook` with property `signing-key`
-- `secret/talk/local/console-api/zitadel-admin` with properties `base-url`, `admin-token`, `api-host-header`, and `project-id`
-- `secret/talk/local/oauth2-proxy/oidc` with properties `issuer-url`, `client-id`, `client-secret`, `cookie-secret`, `redirect-url`, `cookie-domain`, `whitelist-domain`, and `cookie-secure`
-
-Use `scripts/write-local-vault-secrets.sh` to write baseline local Vault values from environment
-variables into your existing localhost Vault. After Zitadel is ready, use
-`scripts/provision-zitadel-management.py --write-local-vault --sync-local-k8s` to create the Talk
-project, roles, `oauth2-proxy` app, and token-claim action, then sync the real OIDC client values
-back into local Vault.
-
-Local Zitadel runs as a platform component and is exposed through the gateway host
-`zitadel.localhost`. Use `scripts/bootstrap-local-dev.sh` after installing External Secrets
-Operator and Envoy Gateway in the local cluster.
-
-Local app routes are exposed through `talk.localhost`. The bootstrap script patches local CoreDNS
-so pods can resolve `zitadel.localhost` to the in-cluster Zitadel service while browsers still use
-the public gateway host.
-
-Local overlays do not deploy Postgres or Vault. They use your machine's existing localhost Postgres
-through the `talk-host-postgres` service alias and your machine's existing localhost Vault through
-`host.docker.internal:8200`. Run `scripts/prepare-local-postgres.sh` to create the expected
-`t_authz` and `t_zitadel` databases on that existing Postgres server.
+The `platform-components/`, `gateway/`, `apps/`, and `services/` directories contain
+the old Kustomize base+overlay manifests. These are superseded by `chart/talk/` and
+will be removed after the Helm migration is verified.

@@ -1,0 +1,84 @@
+## ── Global ──────────────────────────────────────────────────────────
+global:
+  environment: dev            # dev | stg | prod — used as Key Vault prefix
+  domain: talk.example.com    # main app hostname
+  zitadelDomain: zitadel.example.com
+  adminEmail: admin@example.com
+
+nameOverride: ""
+fullnameOverride: ""
+
+## ── TLS ─────────────────────────────────────────────────────────────
+tls:
+  enabled: true
+  clusterIssuer: letsencrypt-prod
+
+## ── Container Registry ─────────────────────────────────────────────
+registry:
+  server: myacr.azurecr.io
+
+## ── External Secrets Operator ───────────────────────────────────────
+externalSecrets:
+  keyVaultUrl: https://my-vault.vault.azure.net/
+  workloadIdentity:
+    clientId: ""
+    tenantId: ""
+
+## ── Zitadel (auth platform) ────────────────────────────────────────
+zitadel:
+  image:
+    repository: ghcr.io/zitadel/zitadel
+    tag: v4.11.0
+  loginImage:
+    repository: ghcr.io/zitadel/zitadel-login
+    tag: v4.11.0
+  replicas: 1
+  database:
+    sslMode: require
+  firstInstance:
+    adminUsername: admin
+    adminFirstName: Talk
+    adminLastName: Admin
+    adminPasswordChangeRequired: false
+    patExpirationDate: "2027-01-01T00:00:00Z"
+
+## ── OAuth2 Proxy ────────────────────────────────────────────────────
+oauth2Proxy:
+  image:
+    repository: quay.io/oauth2-proxy/oauth2-proxy
+    tag: v7.15.2
+  replicas: 2
+
+## ── Gateway ─────────────────────────────────────────────────────────
+gateway:
+  className: talk-envoy
+
+## ── Applications (web frontends) ────────────────────────────────────
+apps:
+  consoleWeb:
+    image:
+      tag: latest
+    replicas: 2
+  adminWeb:
+    image:
+      tag: latest
+    replicas: 2
+
+## ── Services (Python backends) ──────────────────────────────────────
+services:
+  authz:
+    image:
+      tag: latest
+    replicas: 2
+  consoleApi:
+    image:
+      tag: latest
+    replicas: 2
+    config:
+      appEnv: production
+      authzBaseUrl: http://authz:8000
+      dependencyTimeoutSeconds: "5"
+  identitySync:
+    image:
+      tag: latest
+    replicas: 2

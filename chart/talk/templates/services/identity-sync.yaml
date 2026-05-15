@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-sync
+  labels:
+    app.kubernetes.io/name: identity-sync
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.services.identitySync.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: identity-sync
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: identity-sync
+    spec:
+      containers:
+        - name: identity-sync
+          image: {{ .Values.registry.server }}/talk/identity-sync:{{ .Values.services.identitySync.image.tag }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: authz-database
+                  key: database-url
+            - name: ZITADEL_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: identity-sync-zitadel
+                  key: webhook-signing-key
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-sync
+  labels:
+    app.kubernetes.io/name: identity-sync
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: identity-sync
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

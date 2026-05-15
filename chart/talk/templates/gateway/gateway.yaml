@@ -1,0 +1,48 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: talk-public-gateway
+  labels:
+    {{- include "talk.labels" . | nindent 4 }}
+  {{- if .Values.tls.enabled }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.tls.clusterIssuer }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ .Values.gateway.className }}
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: talk-envoy-proxy
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- if .Values.tls.enabled }}
+    - name: https-zitadel
+      protocol: HTTPS
+      port: 443
+      hostname: {{ .Values.global.zitadelDomain }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: zitadel-{{ .Values.global.environment }}-tls
+    - name: https-talk
+      protocol: HTTPS
+      port: 443
+      hostname: {{ .Values.global.domain }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: talk-{{ .Values.global.environment }}-tls
+    {{- end }}

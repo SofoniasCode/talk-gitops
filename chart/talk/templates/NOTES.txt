@@ -1,0 +1,15 @@
+Talk has been deployed to namespace {{ .Release.Namespace }}.
+
+  Environment:  {{ .Values.global.environment }}
+  App domain:   {{ .Values.global.domain }}
+  Zitadel:      {{ .Values.global.zitadelDomain }}
+  TLS:          {{ .Values.tls.enabled }}
+  Registry:     {{ .Values.registry.server }}
+
+To check pod status:
+
+  kubectl get pods -n {{ .Release.Namespace }}
+
+To access the console:
+
+  {{ if .Values.tls.enabled }}https{{ else }}http{{ end }}://{{ .Values.global.domain }}/console/

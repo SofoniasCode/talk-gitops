@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: console-web
+  labels:
+    app.kubernetes.io/name: console-web
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.apps.consoleWeb.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: console-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: console-web
+    spec:
+      containers:
+        - name: console-web
+          image: {{ .Values.registry.server }}/talk/console-web:{{ .Values.apps.consoleWeb.image.tag }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: console-web
+  labels:
+    app.kubernetes.io/name: console-web
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: console-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
