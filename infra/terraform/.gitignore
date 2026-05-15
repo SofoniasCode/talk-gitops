@@ -6,3 +6,5 @@ terraform.tfvars
 terraform.*.tfvars
 *.auto.tfvars
 crash.log
+*.tfplan
+tfplan
