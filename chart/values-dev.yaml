@@ -23,18 +23,18 @@ externalSecrets:
 apps:
   consoleWeb:
     image:
-      tag: b1d541b4543090a1d44307a9592da7e341011455
+      tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
   adminWeb:
     image:
-      tag: b1d541b4543090a1d44307a9592da7e341011455
+      tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
 
 services:
   authz:
     image:
-      tag: b1d541b4543090a1d44307a9592da7e341011455
+      tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
   consoleApi:
     image:
-      tag: b1d541b4543090a1d44307a9592da7e341011455
+      tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
   identitySync:
     image:
-      tag: b1d541b4543090a1d44307a9592da7e341011455
+      tag: ae38654663a74aa6160c5cb5c4783bf74e654bfa
