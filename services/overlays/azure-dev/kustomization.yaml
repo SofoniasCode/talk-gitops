@@ -6,17 +6,11 @@ resources:
   - external-secrets.yaml
 images:
   - name: ghcr.io/talk/authz
-dentity-sync$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
-onsole-api$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
-uthz$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
+    newName: talkdevacr.azurecr.io/talk/authz
     newTag: dev
   - name: ghcr.io/talk/identity-sync
-dentity-sync$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
-onsole-api$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
-uthz$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
+    newName: talkdevacr.azurecr.io/talk/identity-sync
     newTag: dev
   - name: ghcr.io/talk/console-api
-dentity-sync$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
-onsole-api$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
-uthz$/{n;s|newTag:.*|newTag: a578d18f3439e1fe35dee4068f76c979cda36c32|}
+    newName: talkdevacr.azurecr.io/talk/console-api
     newTag: dev

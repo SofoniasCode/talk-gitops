@@ -16,6 +16,10 @@ resource "azuread_application_federated_identity_credential" "github_actions_dev
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "repo:${var.github_repo}:ref:refs/heads/dev"
+
+  lifecycle {
+    ignore_changes = [subject]
+  }
 }
 
 resource "azuread_application_federated_identity_credential" "github_actions_main" {
@@ -24,6 +28,10 @@ resource "azuread_application_federated_identity_credential" "github_actions_mai
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "repo:${var.github_repo}:ref:refs/heads/main"
+
+  lifecycle {
+    ignore_changes = [subject]
+  }
 }
 
 resource "azurerm_role_assignment" "github_actions_acr_push" {
