@@ -30,6 +30,8 @@ spec:
           args:
             - init
             - schema
+          resources:
+            {{- toYaml .Values.zitadel.resources.initSchema | nindent 12 }}
           env:
             - name: ZITADEL_DATABASE_POSTGRES_DSN
               valueFrom:
@@ -92,6 +94,8 @@ spec:
           ports:
             - name: api
               containerPort: 8080
+          resources:
+            {{- toYaml .Values.zitadel.resources.api | nindent 12 }}
           env:
             - name: ZITADEL_MASTERKEY
               valueFrom:
@@ -215,6 +219,8 @@ spec:
           ports:
             - name: login
               containerPort: 3000
+          resources:
+            {{- toYaml .Values.zitadel.resources.login | nindent 12 }}
           env:
             - name: CUSTOM_REQUEST_HEADERS
               value: Host:{{ .Values.global.zitadelDomain }},X-Forwarded-Proto:{{ $scheme }}

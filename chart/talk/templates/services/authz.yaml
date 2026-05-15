@@ -6,7 +6,9 @@ metadata:
     app.kubernetes.io/name: authz
     {{- include "talk.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.services.authz.autoscaling.enabled }}
   replicas: {{ .Values.services.authz.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: authz
@@ -20,6 +22,8 @@ spec:
           image: {{ .Values.registry.server }}/talk/authz:{{ .Values.services.authz.image.tag }}
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "app.db.migrations"]
+          resources:
+            {{- toYaml .Values.services.authz.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -33,6 +37,8 @@ spec:
           ports:
             - name: http
               containerPort: 8000
+          resources:
+            {{- toYaml .Values.services.authz.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -72,6 +78,10 @@ metadata:
     app.kubernetes.io/name: authz
     app.kubernetes.io/component: migration
     {{- include "talk.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+    helm.sh/hook-weight: "0"
 spec:
   backoffLimit: 3
   template:
@@ -86,6 +96,8 @@ spec:
           image: {{ .Values.registry.server }}/talk/authz:{{ .Values.services.authz.image.tag }}
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "app.db.migrations"]
+          resources:
+            {{- toYaml .Values.services.authz.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:

@@ -6,7 +6,9 @@ metadata:
     app.kubernetes.io/name: identity-sync
     {{- include "talk.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.services.identitySync.autoscaling.enabled }}
   replicas: {{ .Values.services.identitySync.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: identity-sync
@@ -19,6 +21,8 @@ spec:
         - name: identity-sync
           image: {{ .Values.registry.server }}/talk/identity-sync:{{ .Values.services.identitySync.image.tag }}
           imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.services.identitySync.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8000

@@ -6,7 +6,9 @@ metadata:
     app.kubernetes.io/name: console-web
     {{- include "talk.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.apps.consoleWeb.autoscaling.enabled }}
   replicas: {{ .Values.apps.consoleWeb.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: console-web
@@ -19,6 +21,8 @@ spec:
         - name: console-web
           image: {{ .Values.registry.server }}/talk/console-web:{{ .Values.apps.consoleWeb.image.tag }}
           imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.apps.consoleWeb.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8080

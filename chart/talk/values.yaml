@@ -35,6 +35,28 @@ zitadel:
   replicas: 1
   database:
     sslMode: require
+  resources:
+    api:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    login:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
+    initSchema:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
   firstInstance:
     adminUsername: admin
     adminFirstName: Talk
@@ -48,6 +70,18 @@ oauth2Proxy:
     repository: quay.io/oauth2-proxy/oauth2-proxy
     tag: v7.15.2
   replicas: 2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 70
 
 ## ── Gateway ─────────────────────────────────────────────────────────
 gateway:
@@ -59,10 +93,34 @@ apps:
     image:
       tag: latest
     replicas: 2
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
   adminWeb:
     image:
       tag: latest
     replicas: 2
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
 
 ## ── Services (Python backends) ──────────────────────────────────────
 services:
@@ -70,10 +128,34 @@ services:
     image:
       tag: latest
     replicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
   consoleApi:
     image:
       tag: latest
     replicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
     config:
       appEnv: production
       authzBaseUrl: http://authz:8000
@@ -82,3 +164,15 @@ services:
     image:
       tag: latest
     replicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70

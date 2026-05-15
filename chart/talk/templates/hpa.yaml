@@ -1,0 +1,143 @@
+{{- if .Values.services.authz.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: authz
+  labels:
+    app.kubernetes.io/name: authz
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: authz
+  minReplicas: {{ .Values.services.authz.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.services.authz.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.services.authz.autoscaling.targetCPU }}
+{{- end }}
+---
+{{- if .Values.services.consoleApi.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: console-api
+  labels:
+    app.kubernetes.io/name: console-api
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: console-api
+  minReplicas: {{ .Values.services.consoleApi.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.services.consoleApi.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.services.consoleApi.autoscaling.targetCPU }}
+{{- end }}
+---
+{{- if .Values.services.identitySync.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: identity-sync
+  labels:
+    app.kubernetes.io/name: identity-sync
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: identity-sync
+  minReplicas: {{ .Values.services.identitySync.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.services.identitySync.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.services.identitySync.autoscaling.targetCPU }}
+{{- end }}
+---
+{{- if .Values.apps.consoleWeb.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: console-web
+  labels:
+    app.kubernetes.io/name: console-web
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: console-web
+  minReplicas: {{ .Values.apps.consoleWeb.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.apps.consoleWeb.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.apps.consoleWeb.autoscaling.targetCPU }}
+{{- end }}
+---
+{{- if .Values.apps.adminWeb.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: admin-web
+  labels:
+    app.kubernetes.io/name: admin-web
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: admin-web
+  minReplicas: {{ .Values.apps.adminWeb.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.apps.adminWeb.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.apps.adminWeb.autoscaling.targetCPU }}
+{{- end }}
+---
+{{- if .Values.oauth2Proxy.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: oauth2-proxy
+  labels:
+    app.kubernetes.io/name: oauth2-proxy
+    {{- include "talk.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: oauth2-proxy
+  minReplicas: {{ .Values.oauth2Proxy.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.oauth2Proxy.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.oauth2Proxy.autoscaling.targetCPU }}
+{{- end }}

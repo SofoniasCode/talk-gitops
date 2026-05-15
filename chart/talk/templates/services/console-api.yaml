@@ -18,7 +18,9 @@ metadata:
     app.kubernetes.io/name: console-api
     {{- include "talk.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.services.consoleApi.autoscaling.enabled }}
   replicas: {{ .Values.services.consoleApi.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: console-api
@@ -31,6 +33,8 @@ spec:
         - name: console-api
           image: {{ .Values.registry.server }}/talk/console-api:{{ .Values.services.consoleApi.image.tag }}
           imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.services.consoleApi.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8000

@@ -6,7 +6,9 @@ metadata:
     app.kubernetes.io/name: admin-web
     {{- include "talk.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.apps.adminWeb.autoscaling.enabled }}
   replicas: {{ .Values.apps.adminWeb.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: admin-web
@@ -19,6 +21,8 @@ spec:
         - name: admin-web
           image: {{ .Values.registry.server }}/talk/admin-web:{{ .Values.apps.adminWeb.image.tag }}
           imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.apps.adminWeb.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8080

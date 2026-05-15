@@ -64,7 +64,9 @@ metadata:
     app.kubernetes.io/name: oauth2-proxy
     {{- include "talk.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.oauth2Proxy.autoscaling.enabled }}
   replicas: {{ .Values.oauth2Proxy.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: oauth2-proxy
@@ -77,6 +79,8 @@ spec:
         - name: oauth2-proxy
           image: {{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}
           imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.oauth2Proxy.resources | nindent 12 }}
           args:
             - --alpha-config=/etc/oauth2-proxy/alpha-config.yaml
             - --proxy-prefix=/oauth2
