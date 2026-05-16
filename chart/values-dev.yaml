@@ -61,11 +61,11 @@ oauth2Proxy:
     public:
       enabled: true
       # Set after configure-zitadel-microsoft-idp.sh prints "Customer IdP ID".
-      microsoftIdpId: ""
+      microsoftIdpId: "373212734893850643"
     console:
       enabled: true
       # Set after configure-zitadel-microsoft-idp.sh prints "Operator IdP ID".
-      microsoftIdpId: ""
+      microsoftIdpId: "373212733602005011"
       # Empty allowlist = no SecurityPolicy. Tighten before ever exposing the
       # dev console to the real internet (e.g. add the office or VPN CIDRs).
       ipAllowlist: []
