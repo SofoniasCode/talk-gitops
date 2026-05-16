@@ -104,7 +104,7 @@ services:
       tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
   consoleApi:
     image:
-      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
+      tag: 2062899060856bd2387bd38513ff576676201a9c
     # Each frontend reaches console-api via /console-api/* on its own
     # subdomain (same origin, routed through the per-subdomain
     # oauth2-proxy), so no CORS configuration is needed.
