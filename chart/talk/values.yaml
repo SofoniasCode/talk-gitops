@@ -180,13 +180,6 @@ oauth2Proxy:
       # customer-facing auth jumps directly to the customer Microsoft IdP.
       # Format: urn:zitadel:iam:org:idp:id:<idp-id>
       microsoftIdpId: ""
-      # Empty list = no group gate at the proxy. The customer surface is
-      # intentionally open to any authenticated Zitadel session; backend
-      # services still enforce per-tenant authorization. Adding entries here
-      # would 403 customers without `organization.*` grants at the proxy
-      # before they ever reach the UI — possible later but risks locking
-      # customers out if grants aren't perfect.
-      allowedGroups: []
       upstreams:
         - id: admin-web
           path: ^/admin/?(.*)$$
@@ -207,15 +200,9 @@ oauth2Proxy:
       # configure-zitadel-microsoft-idp.sh prints "Operator IdP ID".
       microsoftIdpId: ""
       ipAllowlist: []        # empty = no SecurityPolicy is created
-      # oauth2-proxy treats multiple --allowed-group args as OR: any one
-      # match lets the request through. Console is staff-only by policy, so
-      # we require at least one `citadel.*` grant on the session token's
-      # urn:talk:roles claim. Users without any citadel role get a 403
-      # rendered by the proxy itself before any Console UI loads.
-      allowedGroups:
-        - citadel.viewer
-        - citadel.operator
-        - citadel.admin
+      # Console authorization is enforced by Console/console-api via
+      # citadel.* roles. oauth2-proxy v7.15 does not support an
+      # --allowed-group flag, so it only authenticates the session here.
       upstreams:
         - id: console-web
           path: ^/console/?(.*)$$

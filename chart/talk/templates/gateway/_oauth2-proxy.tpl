@@ -177,17 +177,6 @@ spec:
             - --cookie-samesite=lax
             - --cookie-domain=$(OAUTH2_PROXY_COOKIE_DOMAIN)
             - --whitelist-domain=$(OAUTH2_PROXY_WHITELIST_DOMAIN)
-            {{- /*
-            allowedGroups gates the proxy on Zitadel roles. groupsClaim is
-            already wired to urn:talk:roles in the ConfigMap above, so the
-            'groups' field on each session token reflects the user's role
-            grants. Multiple --allowed-group args are OR'd by oauth2-proxy;
-            empty array renders zero args (no gate, any authenticated user
-            passes). The console tier defaults to citadel.* in values.yaml.
-            */}}
-            {{- range $group := $tierConfig.allowedGroups }}
-            - --allowed-group={{ $group }}
-            {{- end }}
           ports:
             - name: http
               containerPort: 4180

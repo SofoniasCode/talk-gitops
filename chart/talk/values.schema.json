@@ -141,11 +141,6 @@
                 "type": "string",
                 "description": "Optional Zitadel Microsoft IdP id rendered into the OIDC scope as urn:zitadel:iam:org:idp:id:<id>. Use the operator IdP for the console tier and the customer IdP for the public tier."
               },
-              "allowedGroups": {
-                "type": "array",
-                "items": { "type": "string" },
-                "description": "Values rendered as --allowed-group=<value> args on oauth2-proxy. Empty array (the default) means no group gate at the proxy — any authenticated Zitadel session passes. Use to gate the operator tier on citadel.* roles. oauth2-proxy treats multiple --allowed-group args as OR (any match lets the request through). The 'groups' claim is sourced from urn:talk:roles per _oauth2-proxy.tpl."
-              },
               "upstreams": {
                 "type": "array",
                 "items": {
