@@ -57,6 +57,10 @@ data:
         values:
           - claimSource:
               claim: groups
+      - name: X-Talk-Plane
+        values:
+          - secretSource:
+              value: {{ $tier | quote }}
       - name: Authorization
         values:
           - claimSource:

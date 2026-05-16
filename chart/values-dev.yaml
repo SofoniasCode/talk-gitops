@@ -66,9 +66,11 @@ oauth2Proxy:
       enabled: true
       # Set after configure-zitadel-microsoft-idp.sh prints "Operator IdP ID".
       microsoftIdpId: "373212733602005011"
-      # Empty allowlist = no SecurityPolicy. Tighten before ever exposing the
-      # dev console to the real internet (e.g. add the office or VPN CIDRs).
-      ipAllowlist: []
+      # Staff Console is private: only the operator's current network can
+      # reach console.dev.telodev.com. Update this CIDR when working from a
+      # different network, or replace with VPN/office/Tailscale CIDRs.
+      ipAllowlist:
+        - 31.42.144.170/32
 
 # Path-based bookmarks (talk.dev.telodev.com/admin etc.) are no longer
 # redirected. Re-enable temporarily if a future migration needs the same
