@@ -153,11 +153,9 @@ spec:
         checksum/config: {{ printf "%s|%s" $tierConfig.cookieName (toYaml $tierConfig.upstreams) | sha256sum }}
     spec:
       {{- with $root.Values.oauth2Proxy.hostAliases }}
-      # Workaround for AKS hairpin: the proxy needs to reach the Zitadel
-      # issuer URL (a public hostname), but pods cannot dial back into the
-      # cluster's own LoadBalancer IP. Resolve that hostname to the Envoy
-      # Gateway data plane Service ClusterIP instead, which terminates the
-      # same TLS cert and routes to Zitadel internally.
+      # AKS hairpin workaround: pods can't dial back into the cluster's own
+      # public LB IP, so resolve zitadel.<baseDomain> to the Envoy Gateway
+      # data-plane Service ClusterIP. Auto-populated by `make post`.
       hostAliases:
         {{- toYaml . | nindent 8 }}
       {{- end }}

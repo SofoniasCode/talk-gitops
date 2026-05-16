@@ -133,7 +133,7 @@
         "console": { "type": "object" },
         "hostAliases": {
           "type": "array",
-          "description": "AKS hairpin workaround — map zitadel.<baseDomain> to the Envoy ClusterIP so oauth2-proxy can resolve OIDC discovery without hitting the public LB.",
+          "description": "AKS hairpin workaround — auto-filled by `make post` with the Envoy ClusterIP so oauth2-proxy can dial Zitadel without leaving the cluster.",
           "items": {
             "type": "object",
             "required": ["ip", "hostnames"],

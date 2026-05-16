@@ -146,8 +146,8 @@ oauth2Proxy:
     minReplicas: 2
     maxReplicas: 10
     targetCPU: 70
-  # Resolve hairpin-affected public hostnames to in-cluster IPs so the proxy
-  # can complete OIDC discovery without leaving the cluster. Set per env.
+  # AKS hairpin workaround — populated automatically by `make post` after
+  # Envoy Gateway provisions its data-plane Service. See REGENERATE.md.
   hostAliases: []
   tiers:
     public:

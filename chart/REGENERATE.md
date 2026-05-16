@@ -7,29 +7,22 @@ every new environment or customer.
 ## Generate
 
 ```sh
-cd ../talk-infra/terraform
-./scripts/tf-init.sh <env-or-customer>
+cd ../talk-infra/terraform/azure
+../../scripts/tf-init.sh <env-or-customer>
 terraform apply -var-file=terraform.tfvars
-terraform output -raw helm_values_yaml > ../../talk-gitops/chart/values-<env>.yaml
 ```
+
+The `local_file.helm_values` resource writes
+`../../talk-gitops/chart/values-<env>.yaml` automatically — no `terraform
+output` step needed.
 
 Replace `<env>` with `dev` | `stg` | `prod` | `customer-<slug>`.
 
-## Then fill in two values Terraform cannot know
+## Then fill in one value Terraform cannot know
 
-1. **`oauth2Proxy.hostAliases[0].ip`** — the Envoy Gateway data-plane
-   ClusterIP. Until you set this, oauth2-proxy times out on Zitadel OIDC
-   discovery due to AKS hairpin routing.
-
-   ```sh
-   kubectl -n envoy-gateway-system get svc \
-     -l gateway.envoyproxy.io/owning-gateway-name=talk-gateway \
-     -o jsonpath='{.items[0].spec.clusterIP}'
-   ```
-
-2. **`oauth2Proxy.console.ipAllowlist`** — list of CIDRs allowed to reach
-   the console subdomain. Defaults to `[]` (open) in dev; tighten before
-   exposing console publicly in stg/prod.
+**`oauth2Proxy.console.ipAllowlist`** — list of CIDRs allowed to reach
+the console subdomain. Defaults to `[]` (open) in dev; tighten before
+exposing console publicly in stg/prod.
 
 ## Image tags
 
