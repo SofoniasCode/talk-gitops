@@ -1,0 +1,4 @@
+environment: stg
+targetNamespace: talk-stg
+gitopsRepo: sofoniascode/talk-gitops   # update when forking the repo
+gitopsBranch: main

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sofoniascode/talk-gitops/chart/talk/values.schema.json",
+  "title": "talk chart values",
+  "description": "Contract that any IaC layer (Azure, AWS, customer-supplied) must satisfy to render the chart. Helm validates incoming values against this schema on every install / template.",
+  "type": "object",
+  "required": ["cloud", "global", "tls", "registry"],
+  "additionalProperties": true,
+  "properties": {
+    "cloud": {
+      "type": "string",
+      "enum": ["azure", "aws"],
+      "description": "Selects which cloud-specific platform templates render."
+    },
+    "global": {
+      "type": "object",
+      "required": ["environment", "adminEmail"],
+      "properties": {
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Env slug, used as the Key Vault / Secrets Manager prefix and Argo Application name suffix."
+        },
+        "baseDomain": {
+          "type": "string",
+          "description": "Apex/zone domain. Per-product subdomains are derived from this when global.domains is unset."
+        },
+        "domains": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Optional explicit hostname override per product (admin, agents, console, zitadel, webhooks)."
+        },
+        "domain": {
+          "type": "string",
+          "description": "Legacy single-host field (deprecated). Set baseDomain + domains instead."
+        },
+        "zitadelDomain": {
+          "type": "string",
+          "description": "Legacy single-host field (deprecated)."
+        },
+        "adminEmail": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "tls": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "clusterIssuer": { "type": "string" },
+        "wildcard": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "clusterIssuer": { "type": "string" },
+            "secretName": { "type": "string" }
+          }
+        }
+      }
+    },
+    "registry": {
+      "type": "object",
+      "required": ["server"],
+      "properties": {
+        "server": {
+          "type": "string",
+          "description": "Container image registry FQDN (e.g. talkdev.azurecr.io or 123.dkr.ecr.us-east-1.amazonaws.com)."
+        }
+      }
+    },
+    "externalSecrets": {
+      "type": "object",
+      "properties": {
+        "keyVaultUrl": {
+          "type": "string",
+          "description": "Azure-only: vault URI consumed by the ESO ClusterSecretStore."
+        },
+        "workloadIdentity": {
+          "type": "object",
+          "description": "Cloud-specific workload-identity binding for ESO. Azure: {clientId, tenantId}. AWS: {roleArn}."
+        }
+      }
+    },
+    "externalDns": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "domainFilter": { "type": "string" },
+        "azure": {
+          "type": "object",
+          "properties": {
+            "subscriptionId": { "type": "string" },
+            "resourceGroup": { "type": "string" },
+            "tenantId": { "type": "string" },
+            "clientId": { "type": "string" }
+          }
+        },
+        "aws": {
+          "type": "object",
+          "properties": {
+            "region": { "type": "string" },
+            "hostedZoneId": { "type": "string" },
+            "roleArn": { "type": "string" }
+          }
+        }
+      }
+    },
+    "certManager": {
+      "type": "object",
+      "properties": {
+        "dns01": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "clusterIssuerName": { "type": "string" },
+            "acmeServer": { "type": "string" },
+            "azure": { "type": "object" },
+            "aws": { "type": "object" }
+          }
+        }
+      }
+    },
+    "oauth2Proxy": {
+      "type": "object",
+      "properties": {
+        "tiers": {
+          "type": "object",
+          "description": "Per-tier (public, console) deployment + cookie config."
+        },
+        "public": { "type": "object" },
+        "console": { "type": "object" },
+        "hostAliases": {
+          "type": "array",
+          "description": "AKS hairpin workaround — map zitadel.<baseDomain> to the Envoy ClusterIP so oauth2-proxy can resolve OIDC discovery without hitting the public LB.",
+          "items": {
+            "type": "object",
+            "required": ["ip", "hostnames"],
+            "properties": {
+              "ip": { "type": "string" },
+              "hostnames": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "argocdBootstrap": {
+      "type": "object",
+      "description": "Consumed by talk-gitops/argocd-bootstrap, not by the workload chart itself. Emitted by Terraform here for round-trip convenience.",
+      "properties": {
+        "gitopsRepo": { "type": "string" },
+        "environment": { "type": "string" }
+      }
+    },
+    "apps": { "type": "object" },
+    "services": { "type": "object" },
+    "legacyPathRedirects": { "type": "object" }
+  }
+}

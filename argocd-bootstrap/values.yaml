@@ -1,0 +1,29 @@
+# Default values for the argocd-bootstrap chart. Override per environment
+# with values-<env>.yaml, or per customer with values-customer-<slug>.yaml.
+
+# Argo CD project to install the Application into.
+project: default
+
+# Argo CD instance namespace (where the controller runs).
+argocdNamespace: argocd
+
+# Environment slug — drives the Application name (talk-<environment>) and
+# selects chart/values-<environment>.yaml inside the gitops repo.
+environment: dev
+
+# Target namespace for the Talk workload chart.
+targetNamespace: talk-dev
+
+# Source repo coordinates. The gitops repo URL is the single value that
+# changes when you fork the repo into a different GitHub org.
+gitopsRepo: ""                       # required, e.g. "YourOrg/talk-gitops"
+gitopsRepoUrl: ""                    # optional override; defaults to https://github.com/<gitopsRepo>.git
+gitopsBranch: main
+chartPath: chart/talk
+
+# Sync behaviour
+sync:
+  automated: true
+  prune: true
+  selfHeal: true
+  createNamespace: true

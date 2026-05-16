@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: talk-external-secrets-workload-identity
-  namespace: external-secrets
-  annotations:
-    azure.workload.identity/client-id: 15656477-0f53-44b8-9cd2-955bb4ef69ef
-    azure.workload.identity/tenant-id: 9865568e-ab2b-4e9e-844e-b8047f9babda

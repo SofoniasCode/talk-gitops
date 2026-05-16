@@ -1,11 +1,11 @@
-{{- if .Values.externalDns.enabled }}
+{{- if and (eq .Values.cloud "azure") .Values.externalDns.enabled }}
 apiVersion: v1
 kind: Namespace
 metadata:
   name: external-dns
   labels:
     {{- include "talk.labels" . | nindent 4 }}
-    azure.workload.identity/use: "true"
+    {{- include "talk.workloadIdentitySaLabels" . | nindent 4 }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -14,10 +14,9 @@ metadata:
   namespace: external-dns
   labels:
     {{- include "talk.labels" . | nindent 4 }}
-    azure.workload.identity/use: "true"
+    {{- include "talk.workloadIdentitySaLabels" . | nindent 4 }}
   annotations:
-    azure.workload.identity/client-id: {{ .Values.externalDns.azure.clientId | quote }}
-    azure.workload.identity/tenant-id: {{ .Values.externalDns.azure.tenantId | quote }}
+    {{- include "talk.workloadIdentityAnnotations" (list $ (dict "clientId" .Values.externalDns.azure.clientId "tenantId" .Values.externalDns.azure.tenantId)) | nindent 4 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -98,7 +97,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: external-dns
-        azure.workload.identity/use: "true"
+        {{- include "talk.workloadIdentityPodLabels" . | nindent 8 }}
       annotations:
         checksum/azure-config: {{ printf "%s|%s|%s|%s" .Values.externalDns.azure.tenantId .Values.externalDns.azure.subscriptionId .Values.externalDns.azure.resourceGroup .Values.externalDns.azure.clientId | sha256sum }}
     spec:

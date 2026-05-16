@@ -1,7 +1,16 @@
+## ── Cloud target ────────────────────────────────────────────────────
+## Selects which cloud-specific platform templates to render
+## (cert-manager Issuer, external-dns provider, ESO ClusterSecretStore,
+## and ServiceAccount workload-identity annotations).
+##
+## Currently supported: azure
+## Planned:             aws
+cloud: azure
+
 ## ── Global ──────────────────────────────────────────────────────────
 global:
   environment: dev            # dev | stg | prod — used as Key Vault prefix
-  baseDomain: example.com     # the env's DNS zone, e.g. dev.telodev.com
+  baseDomain: example.com     # the env's DNS zone, e.g. dev.example.com
   # Per-product subdomains. When unset they default to <key>.<baseDomain> via
   # the talk.host helper. Override if a product needs a different name.
   domains: {}

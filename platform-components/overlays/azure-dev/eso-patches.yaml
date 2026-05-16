@@ -1,8 +1,0 @@
-apiVersion: external-secrets.io/v1
-kind: ClusterSecretStore
-metadata:
-  name: talk-azure-key-vault
-spec:
-  provider:
-    azurekv:
-      vaultUrl: https://talk-dev-vault.vault.azure.net/

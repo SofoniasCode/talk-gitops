@@ -1,0 +1,3 @@
+{{- if and (eq .Values.cloud "aws") .Values.tls.enabled .Values.tls.wildcard.enabled .Values.certManager.dns01.enabled -}}
+{{- fail "AWS cert-manager DNS-01 ClusterIssuer is not yet implemented. Add a Route53-shaped solver here and remove this fail." -}}
+{{- end -}}

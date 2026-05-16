@@ -1,0 +1,3 @@
+{{- if and (eq .Values.cloud "aws") .Values.externalDns.enabled -}}
+{{- fail "AWS external-dns is not yet implemented. Add a Route53-shaped manifest here and remove this fail." -}}
+{{- end -}}

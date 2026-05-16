@@ -1,5 +1,6 @@
 Talk has been deployed to namespace {{ .Release.Namespace }}.
 
+  Cloud:         {{ .Values.cloud }}
   Environment:   {{ .Values.global.environment }}
   Base domain:   {{ default .Values.global.domain .Values.global.baseDomain }}
   TLS:           {{ .Values.tls.enabled }}{{ if .Values.tls.wildcard.enabled }} (wildcard {{ .Values.tls.wildcard.secretName }}){{ end }}

@@ -1,0 +1,31 @@
+{{- $repoUrl := .Values.gitopsRepoUrl | default (printf "https://github.com/%s.git" .Values.gitopsRepo) -}}
+{{- if not .Values.gitopsRepo -}}
+{{- fail "argocd-bootstrap: gitopsRepo (or gitopsRepoUrl) must be set in values" -}}
+{{- end -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: talk-{{ .Values.environment }}
+  namespace: {{ .Values.argocdNamespace }}
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: {{ $repoUrl | quote }}
+    targetRevision: {{ .Values.gitopsBranch | quote }}
+    path: {{ .Values.chartPath | quote }}
+    helm:
+      valueFiles:
+        - ../../chart/values-{{ .Values.environment }}.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.targetNamespace }}
+  syncPolicy:
+    {{- if .Values.sync.automated }}
+    automated:
+      prune: {{ .Values.sync.prune }}
+      selfHeal: {{ .Values.sync.selfHeal }}
+    {{- end }}
+    syncOptions:
+      {{- if .Values.sync.createNamespace }}
+      - CreateNamespace=true
+      {{- end }}

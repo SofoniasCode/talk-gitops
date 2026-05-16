@@ -1,0 +1,10 @@
+apiVersion: v2
+name: argocd-bootstrap
+description: |
+  One Argo CD Application per environment (or customer) that points Argo at
+  the talk-gitops Helm chart for this environment. Replaces the previous
+  argocd-applications/<env>/talk.yaml manifest tree so the gitops repo URL
+  and env name live in exactly one place (values-<env>.yaml).
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
