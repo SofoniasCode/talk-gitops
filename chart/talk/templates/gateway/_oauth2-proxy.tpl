@@ -60,7 +60,9 @@ data:
       - name: X-Talk-Plane
         values:
           - secretSource:
-              value: {{ $tier | quote }}
+              # oauth2-proxy secretSource.value is base64 encoded in config
+              # and decoded before it is sent to the upstream service.
+              value: {{ $tier | b64enc | quote }}
       - name: Authorization
         values:
           - claimSource:
