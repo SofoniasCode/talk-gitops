@@ -75,13 +75,13 @@ legacyPathRedirects:
 apps:
   consoleWeb:
     image:
-      tag: 71071184eeeb0e8e1bceefa430ab6753edd5d958
+      tag: ff6289b6963c67361d8d28a7736896bc715276a3
   adminWeb:
     image:
-      tag: 71071184eeeb0e8e1bceefa430ab6753edd5d958
+      tag: ff6289b6963c67361d8d28a7736896bc715276a3
   agentsWeb:
     image:
-      tag: 71071184eeeb0e8e1bceefa430ab6753edd5d958
+      tag: ff6289b6963c67361d8d28a7736896bc715276a3
 
 services:
   authz:
