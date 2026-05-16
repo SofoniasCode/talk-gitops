@@ -110,4 +110,4 @@ services:
     # oauth2-proxy), so no CORS configuration is needed.
   identitySync:
     image:
-      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
+      tag: 1b92c56675d7eeb8ff99897fd9d087b9e1aff743
