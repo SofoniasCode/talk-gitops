@@ -49,7 +49,7 @@ spec:
         - name: oauth2-proxy-public
           port: 4180
 ---
-{{- /* ---------- agents.<base> (public tier) ---------- */ -}}
+{{/* ---------- agents.<base> (public tier) ---------- */ -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -90,7 +90,7 @@ spec:
         - name: oauth2-proxy-public
           port: 4180
 ---
-{{- /* ---------- console.<base> (staff tier) ---------- */ -}}
+{{/* ---------- console.<base> (staff tier) ---------- */ -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -131,7 +131,7 @@ spec:
         - name: oauth2-proxy-console
           port: 4180
 ---
-{{- /* ---------- webhooks.<base> (unauthenticated, signature-verified) ---------- */ -}}
+{{/* ---------- webhooks.<base> (unauthenticated, signature-verified) ---------- */ -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -157,9 +157,9 @@ spec:
       backendRefs:
         - name: identity-sync
           port: 8000
-{{- if .Values.legacyPathRedirects.enabled }}
+{{ if .Values.legacyPathRedirects.enabled }}
 ---
-{{- /* ---------- transitional: redirect old paths on the legacy host ---------- */ -}}
+{{/* ---------- transitional: redirect old paths on the legacy host ---------- */ -}}
 {{- $legacyHost := .Values.legacyPathRedirects.host -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

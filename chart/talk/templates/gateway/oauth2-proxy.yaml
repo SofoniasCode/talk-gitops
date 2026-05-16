@@ -7,5 +7,5 @@
 ---
 {{ include "talk.oauth2Proxy.deployment" (dict "root" $root "tier" $tier "tierConfig" $tierConfig) }}
 ---
-{{- end }}
-{{- end }}
+{{ end }}
+{{ end }}
