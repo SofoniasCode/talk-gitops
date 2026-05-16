@@ -1,4 +1,12 @@
 environment: dev
 targetNamespace: talk-dev
-gitopsRepo: sofoniascode/talk-gitops   # update when forking the repo
+
+# `gitopsRepo` (Org/repo) and `gitopsRepoUrl` (full URL) are intentionally
+# left unset here so the chart fails fast if the repo coordinates aren't
+# provided per-tenant. Terraform (`talk-infra/terraform/azure/cluster-bootstrap.tf`)
+# passes them via `helm upgrade --set gitopsRepo=$VAR.gitops_repo`.
+# For manual installs:
+#   helm upgrade --install talk-bootstrap argocd-bootstrap \
+#     -f values-dev.yaml --set gitopsRepo=YourOrg/talk-gitops
+gitopsRepo: ""
 gitopsBranch: main

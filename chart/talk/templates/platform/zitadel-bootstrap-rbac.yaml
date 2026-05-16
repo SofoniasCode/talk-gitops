@@ -1,0 +1,56 @@
+{{- if .Values.zitadel.bootstrapPats.captureEnabled }}
+# ServiceAccount + namespace-scoped Role used by the in-pod `pat-capturer`
+# sidecar in zitadel-deployment.yaml. The sidecar reads the PAT files that
+# Zitadel's start-from-setup writes to its emptyDir on first boot, and
+# materialises them into the `zitadel-bootstrap-pats` Secret so subsequent
+# pod restarts (which get a fresh emptyDir) still have the PATs the login
+# sidecar needs to talk to the api container.
+#
+# The Role is intentionally minimal: only the Secret named
+# `zitadel-bootstrap-pats` in this namespace can be touched.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zitadel-bootstrap-pat-capturer
+  labels:
+    app.kubernetes.io/name: zitadel
+    app.kubernetes.io/component: bootstrap
+    {{- include "talk.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: zitadel-bootstrap-pat-capturer
+  labels:
+    app.kubernetes.io/name: zitadel
+    app.kubernetes.io/component: bootstrap
+    {{- include "talk.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["zitadel-bootstrap-pats"]
+    verbs: ["get", "create", "update", "patch"]
+  # `create` cannot be restricted by resourceName, so it is granted on the
+  # collection. The verb is paired with a name check inside the sidecar
+  # script (kubectl apply --dry-run + targeted name), and the Role does not
+  # grant `delete` so a compromised sidecar cannot remove the Secret.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zitadel-bootstrap-pat-capturer
+  labels:
+    app.kubernetes.io/name: zitadel
+    app.kubernetes.io/component: bootstrap
+    {{- include "talk.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: zitadel-bootstrap-pat-capturer
+subjects:
+  - kind: ServiceAccount
+    name: zitadel-bootstrap-pat-capturer
+{{- end }}

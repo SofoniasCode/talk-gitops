@@ -122,6 +122,29 @@ zitadel:
     adminLastName: Admin
     adminPasswordChangeRequired: false
     patExpirationDate: "2027-01-01T00:00:00Z"
+  # In-pod sidecar that captures the PATs Zitadel writes to its emptyDir on
+  # first boot and materialises them into the `zitadel-bootstrap-pats`
+  # Secret. Without this, a fresh install requires a manual one-time step
+  # to create the Secret before `make post` (talk-infra) can authenticate.
+  # Safe to leave on after bootstrap — the sidecar idles once the Secret
+  # exists.
+  bootstrapPats:
+    captureEnabled: true
+    # alpine/k8s ships a small POSIX shell + kubectl matching the cluster
+    # version. rancher/kubectl is distroless (no /bin/sh) so the inline
+    # script below would not run; bitnami/kubectl no longer publishes
+    # versioned free tags. Override per-tenant if a private registry mirror
+    # is required.
+    image:
+      repository: alpine/k8s
+      tag: 1.34.7
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
 
 ## ── OAuth2 Proxy ────────────────────────────────────────────────────
 # Two-tier deployment. The "public" tier covers customer-facing products

@@ -15,6 +15,9 @@ spec:
       labels:
         app.kubernetes.io/name: zitadel
     spec:
+      {{- if .Values.zitadel.bootstrapPats.captureEnabled }}
+      serviceAccountName: zitadel-bootstrap-pat-capturer
+      {{- end }}
       volumes:
         - name: bootstrap
           emptyDir: {}
@@ -241,3 +244,42 @@ spec:
               port: login
             initialDelaySeconds: 20
             periodSeconds: 10
+        {{- if .Values.zitadel.bootstrapPats.captureEnabled }}
+        - name: pat-capturer
+          # Captures the PATs that Zitadel's `start-from-setup` writes to the
+          # api container's emptyDir on first boot, and materialises them
+          # into the `zitadel-bootstrap-pats` Secret so the login sidecar (and
+          # `make post` in talk-infra) have a durable source of the PATs. On
+          # subsequent pod restarts (fresh emptyDir, no rewrite) the sidecar
+          # waits forever for files that never appear, which is harmless
+          # because the Secret already exists.
+          image: {{ .Values.zitadel.bootstrapPats.image.repository }}:{{ .Values.zitadel.bootstrapPats.image.tag }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command: ["/bin/sh", "-eu", "-c"]
+          args:
+            - |
+              echo "[pat-capturer] waiting for Zitadel start-from-setup to write PAT files..."
+              while [ ! -s /zitadel/bootstrap/admin-service.pat ] || \
+                    [ ! -s /zitadel/bootstrap/login-client.pat ]; do
+                sleep 5
+              done
+              echo "[pat-capturer] PAT files present; upserting Secret/zitadel-bootstrap-pats"
+              kubectl create secret generic zitadel-bootstrap-pats \
+                --namespace="$POD_NAMESPACE" \
+                --from-file=admin-service.pat=/zitadel/bootstrap/admin-service.pat \
+                --from-file=login-client.pat=/zitadel/bootstrap/login-client.pat \
+                --dry-run=client -o yaml | kubectl apply -f -
+              echo "[pat-capturer] capture complete; idling for the rest of the pod lifetime"
+              exec sleep infinity
+          volumeMounts:
+            - name: bootstrap
+              mountPath: /zitadel/bootstrap
+              readOnly: true
+          resources:
+            {{- toYaml .Values.zitadel.bootstrapPats.resources | nindent 12 }}
+        {{- end }}

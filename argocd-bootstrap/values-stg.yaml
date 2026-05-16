@@ -1,4 +1,7 @@
 environment: stg
 targetNamespace: talk-stg
-gitopsRepo: sofoniascode/talk-gitops   # update when forking the repo
+
+# `gitopsRepo` (Org/repo) is set per-tenant via `helm --set` (Terraform does
+# this automatically in talk-infra). See values-dev.yaml for details.
+gitopsRepo: ""
 gitopsBranch: main

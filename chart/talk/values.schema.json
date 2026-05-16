@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sofoniascode/talk-gitops/chart/talk/values.schema.json",
+  "$id": "talk-gitops/chart/talk/values.schema.json",
   "title": "talk chart values",
   "description": "Contract that any IaC layer (Azure, AWS, customer-supplied) must satisfy to render the chart. Helm validates incoming values against this schema on every install / template.",
   "type": "object",
