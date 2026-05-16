@@ -64,6 +64,9 @@ oauth2Proxy:
       microsoftIdpId: "373212734893850643"
     console:
       enabled: true
+      # Rotate after changing operator access policy so stale customer-auth
+      # Console sessions cannot continue using an old browser cookie.
+      cookieName: _talk_console_operator
       # Set after configure-zitadel-microsoft-idp.sh prints "Operator IdP ID".
       microsoftIdpId: "373212733602005011"
       # Staff Console is private: only the operator's current network can
