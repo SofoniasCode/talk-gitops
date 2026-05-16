@@ -93,7 +93,7 @@ apps:
       tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
   adminWeb:
     image:
-      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
+      tag: d8780a897181467ccede0e8badc4bde8e560e33f
   agentsWeb:
     image:
       tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
