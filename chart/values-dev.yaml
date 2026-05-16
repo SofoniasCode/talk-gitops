@@ -90,24 +90,24 @@ legacyPathRedirects:
 apps:
   consoleWeb:
     image:
-      tag: 55bbcf75de49f50493011049e4bc3d2ae31ffb9c
+      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
   adminWeb:
     image:
-      tag: 55bbcf75de49f50493011049e4bc3d2ae31ffb9c
+      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
   agentsWeb:
     image:
-      tag: 55bbcf75de49f50493011049e4bc3d2ae31ffb9c
+      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
 
 services:
   authz:
     image:
-      tag: 55bbcf75de49f50493011049e4bc3d2ae31ffb9c
+      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
   consoleApi:
     image:
-      tag: 55bbcf75de49f50493011049e4bc3d2ae31ffb9c
+      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
     # Each frontend reaches console-api via /console-api/* on its own
     # subdomain (same origin, routed through the per-subdomain
     # oauth2-proxy), so no CORS configuration is needed.
   identitySync:
     image:
-      tag: 55bbcf75de49f50493011049e4bc3d2ae31ffb9c
+      tag: 5b62cb2e48f090eb53dbb256673c54cb1f493062
