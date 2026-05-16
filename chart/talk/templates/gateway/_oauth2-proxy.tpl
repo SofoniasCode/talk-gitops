@@ -34,7 +34,7 @@ data:
         provider: oidc
         clientID: "${OAUTH2_PROXY_CLIENT_ID}"
         clientSecret: "${OAUTH2_PROXY_CLIENT_SECRET}"
-        scope: "openid email profile urn:zitadel:iam:user:resourceowner{{- with $tierConfig.microsoftIdpId }} urn:zitadel:iam:org:idp:id:{{ . }}{{- end }}"
+        scope: "openid email profile urn:zitadel:iam:user:resourceowner{{- with $tierConfig.zitadelOrgId }} urn:zitadel:iam:org:id:{{ . }}{{- end }}{{- if and (not $tierConfig.zitadelOrgId) $tierConfig.microsoftIdpId }} urn:zitadel:iam:org:idp:id:{{ $tierConfig.microsoftIdpId }}{{- end }}"
         oidcConfig:
           issuerURL: "${OAUTH2_PROXY_OIDC_ISSUER_URL}"
           insecureSkipIssuerVerification: ${OAUTH2_PROXY_INSECURE_SKIP_ISSUER_VERIFICATION}
@@ -156,7 +156,7 @@ spec:
         app.kubernetes.io/name: oauth2-proxy
         app.kubernetes.io/component: {{ $tier }}
       annotations:
-        checksum/config: {{ printf "%s|%s|%s" $tierConfig.cookieName (toYaml $tierConfig.upstreams) ($tierConfig.microsoftIdpId | default "") | sha256sum }}
+        checksum/config: {{ printf "%s|%s|%s|%s" $tierConfig.cookieName (toYaml $tierConfig.upstreams) ($tierConfig.microsoftIdpId | default "") ($tierConfig.zitadelOrgId | default "") | sha256sum }}
     spec:
       {{- with $root.Values.oauth2Proxy.hostAliases }}
       # AKS hairpin workaround: pods can't dial back into the cluster's own

@@ -60,8 +60,14 @@ oauth2Proxy:
   tiers:
     public:
       enabled: true
-      # Set after configure-zitadel-microsoft-idp.sh prints "Customer IdP ID".
-      microsoftIdpId: "373212734893850643"
+      # Rotate after moving public login to the customer-login org so stale
+      # public sessions created through the operator policy are not reused.
+      cookieName: _talk_public_customer
+      # Customer-facing login context. Its login policy has only
+      # Microsoft (Customer) attached.
+      zitadelOrgId: "373219150450917395"
+      # Customer IdP is selected by the customer-login org policy above.
+      microsoftIdpId: ""
     console:
       enabled: true
       # Rotate after changing operator access policy so stale customer-auth

@@ -141,6 +141,10 @@
                 "type": "string",
                 "description": "Optional Zitadel Microsoft IdP id rendered into the OIDC scope as urn:zitadel:iam:org:idp:id:<id>. Use the operator IdP for the console tier and the customer IdP for the public tier."
               },
+              "zitadelOrgId": {
+                "type": "string",
+                "description": "Optional Zitadel organization id rendered into the OIDC scope as urn:zitadel:iam:org:id:<id>. Use for a tier-specific login policy, such as the customer-login org for admin/agents."
+              },
               "upstreams": {
                 "type": "array",
                 "items": {

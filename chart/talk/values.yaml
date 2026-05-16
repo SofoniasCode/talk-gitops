@@ -180,6 +180,11 @@ oauth2Proxy:
       # customer-facing auth jumps directly to the customer Microsoft IdP.
       # Format: urn:zitadel:iam:org:idp:id:<idp-id>
       microsoftIdpId: ""
+      # Optional Zitadel organization id whose login policy should handle
+      # this tier. For the customer plane, point this at the dedicated
+      # customer-login org that has only Microsoft (Customer) attached.
+      # When set, the chart uses the org scope and does not add microsoftIdpId.
+      zitadelOrgId: ""
       upstreams:
         - id: admin-web
           path: ^/admin/?(.*)$$
@@ -199,6 +204,7 @@ oauth2Proxy:
       # Operator-plane Microsoft IdP. Set per environment after
       # configure-zitadel-microsoft-idp.sh prints "Operator IdP ID".
       microsoftIdpId: ""
+      zitadelOrgId: ""
       ipAllowlist: []        # empty = no SecurityPolicy is created
       # Console authorization is enforced by Console/console-api via
       # citadel.* roles. oauth2-proxy v7.15 does not support an
